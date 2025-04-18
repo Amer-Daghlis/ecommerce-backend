@@ -2,22 +2,11 @@ from pydantic import BaseModel
 from typing import List, Optional
 from datetime import datetime
 
-class CategoryOut(BaseModel):
-    category_id: int
-    category_name: str
+class AddToWishlistRequest(BaseModel):
+    user_id: int
+    product_id: int
 
-    class Config:
-        orm_mode = True
-
-# 🔽 New: Attachment schema for product photos
-class ProductAttachmentOut(BaseModel):
-    attachment_link: str
-
-    class Config:
-        orm_mode = True
-
-# 🔽 New: Full product info with photo URLs
-class ProductOut(BaseModel):
+class WishlistItemOut(BaseModel):
     product_id: int
     product_name: str
     year_of_manufacturing: Optional[int]
@@ -35,15 +24,6 @@ class ProductOut(BaseModel):
     company_id: Optional[int]
     added_at: datetime
     attachments: List[str] = []
-
-    class Config:
-        orm_mode = True
-
-# 🔽 New: Category with full product list
-class CategoryWithProducts(BaseModel):
-    category_id: int
-    category_name: str
-    products: List[ProductOut] = []
 
     class Config:
         orm_mode = True
