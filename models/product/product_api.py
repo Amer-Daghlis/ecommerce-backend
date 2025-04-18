@@ -13,12 +13,12 @@ def get_db():
     finally:
         db.close()
 
-# 🟢 Add new product
+#  Add new product
 @router.post("/NewProduct", response_model=product_schema.ProductOut)
 def add_product(product: product_schema.ProductCreate, db: Session = Depends(get_db)):
     return product_db.create_product(db, product)
 
-# 🟡 Get all products
+#  Get all products ✅
 @router.get("/", response_model=list[product_schema.ProductOut])
 def fetch_all_products(db: Session = Depends(get_db)):
     products = product_db.get_all_products(db)
@@ -30,7 +30,7 @@ def fetch_all_products(db: Session = Depends(get_db)):
         output.append(out)
     return output
 
-# 🔵 Get product by ID (with photo URLs)
+#  Get product by ID (with photo URLs)
 @router.get("/{product_id}", response_model=product_schema.ProductOut)
 def fetch_product_by_id(product_id: int, db: Session = Depends(get_db)):
     product = product_db.get_product_by_id(db, product_id)
@@ -39,7 +39,7 @@ def fetch_product_by_id(product_id: int, db: Session = Depends(get_db)):
     out = product_schema.ProductOut.from_orm(product)
     out.attachments = get_attachments_by_product_id(db, product_id)
     return out
-# 🔴 DELETE a product by ID
+#  DELETE a product by ID
 @router.delete("/{product_id}")
 def delete_product_by_id(product_id: int, db: Session = Depends(get_db)):
     product = product_db.get_product_by_id(db, product_id)
