@@ -25,7 +25,7 @@ def signin_user(data: user_schema.UserCreate, db: Session = Depends(get_db)):
     db_user = user_db.get_user_by_email(db, data.user_email)
     if not db_user or not verify_password(data.user_password, db_user.user_password):
         raise HTTPException(status_code=401, detail="Invalid email or password")
-    return {"message": "Login successful", "user_id": db_user.user_id}
+    return {"IsUserDefined": True, "user_id": db_user.user_id}
 
 #  GET: Get user by ID✅
 @router.get("/{user_id}", response_model=user_schema.UserOut)
