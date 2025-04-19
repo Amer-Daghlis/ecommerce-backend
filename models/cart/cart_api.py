@@ -5,6 +5,7 @@ from . import cart_schema, cart_db
 
 router = APIRouter(prefix="/cart", tags=["Cart"])
 
+# 🔧 Dependency to get DB session
 def get_db():
     db = SessionLocal()
     try:
@@ -12,10 +13,22 @@ def get_db():
     finally:
         db.close()
 
-#  Add product to user's cart ✅
+
+# ✅ POST: Add product to user's cart
 @router.post("/add")
 def add_product_to_cart(data: cart_schema.AddToCartRequest, db: Session = Depends(get_db)):
     cart, error = cart_db.add_to_cart(db, data.user_id, data.product_id, data.quantity)
     if error:
         raise HTTPException(status_code=404, detail=error)
-    return {"message": "Product added to cart", "cart_id": cart.cart_id, "total_price": cart.total_price}
+    return {
+        "message": "Product added to cart",
+        "cart_id": cart.cart_id,
+        "total_price": cart.total_price
+    }
+
+
+# ✅ GET: Get number of unique products in user's cart
+@router.get("/count/{user_id}")
+def get_cart_product_count(user_id: int, db: Session = Depends(get_db)):
+    count = cart_db.get_cart_product_count(db, user_id)
+    return {"user_id": user_id, "product_count": count}

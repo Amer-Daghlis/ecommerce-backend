@@ -5,9 +5,13 @@ from datetime import datetime
 class CategoryOut(BaseModel):
     category_id: int
     category_name: str
+    description: Optional[str] = None
+    photo: Optional[str] = None
+    product_count: int
 
     class Config:
         orm_mode = True
+
 
 # 🔽 New: Attachment schema for product photos
 class ProductAttachmentOut(BaseModel):
@@ -44,6 +48,15 @@ class CategoryWithProducts(BaseModel):
     category_id: int
     category_name: str
     products: List[ProductOut] = []
+
+    class Config:
+        orm_mode = True
+
+# 🔽 New: Random category with product count
+class CategoryWithProductCount(BaseModel):
+    category_id: int
+    category_name: str
+    product_count: int
 
     class Config:
         orm_mode = True
