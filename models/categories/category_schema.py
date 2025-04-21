@@ -12,15 +12,14 @@ class CategoryOut(BaseModel):
     class Config:
         orm_mode = True
 
-
-# 🔽 New: Attachment schema for product photos
+# 🔽 Attachment schema for product photos
 class ProductAttachmentOut(BaseModel):
     attachment_link: str
 
     class Config:
         orm_mode = True
 
-# 🔽 New: Full product info with photo URLs
+# 🔽 Full product info with photo URLs
 class ProductOut(BaseModel):
     product_id: int
     product_name: str
@@ -43,7 +42,7 @@ class ProductOut(BaseModel):
     class Config:
         orm_mode = True
 
-# 🔽 New: Category with full product list
+# 🔽 Category with full product list
 class CategoryWithProducts(BaseModel):
     category_id: int
     category_name: str
@@ -52,11 +51,34 @@ class CategoryWithProducts(BaseModel):
     class Config:
         orm_mode = True
 
-# 🔽 New: Random category with product count
+# 🔽 Random category with product count
 class CategoryWithProductCount(BaseModel):
     category_id: int
     category_name: str
     product_count: int
+
+    class Config:
+        orm_mode = True
+
+# ✅ New: Tool-focused product schema
+class ToolProductOut(BaseModel):
+    product_id: int
+    product_name: str
+    selling_price: Optional[float]
+    company_id: Optional[int]
+    how_use_it: Optional[str]
+    product_rating: Optional[int]
+    availability_status: Optional[bool]
+    attachments: List[str] = []
+
+    class Config:
+        orm_mode = True
+
+# ✅ New: Category with tools only
+class CategoryWithTools(BaseModel):
+    category_id: int
+    category_name: str
+    products: List[ToolProductOut] = []
 
     class Config:
         orm_mode = True

@@ -17,8 +17,28 @@ class Category(Base):
 
 # ✅ Get all categories
 def get_all_categories(db: Session):
-    return db.query(Category).all()
+    from sqlalchemy import func as sqlalchemy_func
 
+    categories = db.query(Category).all()
+    result = []
+
+    for category in categories:
+        product_count = db.query(sqlalchemy_func.count(Product.product_id))\
+                          .filter(Product.category_id == category.category_id)\
+                          .scalar()
+
+        result.append({
+            "category_id": category.category_id,
+            "category_name": category.category_name,
+            "description": getattr(category, "description", None),
+            "photo": getattr(category, "photo", None),
+            "product_count": product_count
+        })
+
+    return result
+
+
+# ✅ Get 4 random categories with full fields
 def get_random_categories(db: Session, limit: int = 4):
     categories = db.query(Category).order_by(func.rand()).limit(limit).all()
     result = []
@@ -38,8 +58,7 @@ def get_random_categories(db: Session, limit: int = 4):
 
     return result
 
-
-# ✅ Get categories with full products and photos
+# ✅ Get categories with full product info
 def get_categories_with_products(db: Session):
     categories = db.query(Category).all()
     for category in categories:
@@ -62,3 +81,30 @@ def get_random_categories_with_product_count(db: Session, limit: int = 4):
         })
 
     return result
+
+# ✅ NEW: Get simplified tools-only format for categories
+def get_categories_with_tools_only(db: Session):
+    categories = db.query(Category).all()
+    output = []
+
+    for category in categories:
+        tools = []
+        for p in category.products:
+            tools.append({
+                "product_id": p.product_id,
+                "product_name": p.product_name,
+                "selling_price": p.selling_price,
+                "company_id": p.company_id,
+                "how_use_it": p.how_use_it,
+                "product_rating": p.product_rating,
+                "availability_status": p.availability_status,
+                "attachments": get_attachments_by_product_id(db, p.product_id)
+            })
+
+        output.append({
+            "category_id": category.category_id,
+            "category_name": category.category_name,
+            "products": tools
+        })
+
+    return output

@@ -22,8 +22,12 @@ def get_all_categories(db: Session = Depends(get_db)):
 def get_random_categories(db: Session = Depends(get_db)):
     return category_db.get_random_categories(db)
 
-
-# ✅ GET all categories with all products + attachments
+# ✅ GET all categories with full products
 @router.get("/with-products", response_model=list[category_schema.CategoryWithProducts])
 def get_categories_with_products(db: Session = Depends(get_db)):
     return category_db.get_categories_with_products(db)
+
+# ✅ NEW: GET categories with tools (id, name, price, company, rating, desc, etc.)
+@router.get("/with-tools", response_model=list[category_schema.CategoryWithTools])
+def get_categories_with_tools(db: Session = Depends(get_db)):
+    return category_db.get_categories_with_tools_only(db)
