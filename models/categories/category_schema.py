@@ -65,14 +65,15 @@ class ToolProductOut(BaseModel):
     product_id: int
     product_name: str
     selling_price: Optional[float]
-    company_id: Optional[int]
-    how_use_it: Optional[str]
+    company_name: Optional[str]
+    description: Optional[str]
     product_rating: Optional[int]
     availability_status: Optional[bool]
     attachments: List[str] = []
 
     class Config:
         orm_mode = True
+
 
 # ✅ New: Category with tools only
 class CategoryWithTools(BaseModel):
