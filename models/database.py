@@ -6,8 +6,8 @@ from sqlalchemy.exc import OperationalError
 MYSQL_USER = "root"
 MYSQL_PASSWORD = ""   
 MYSQL_HOST = "localhost"
-MYSQL_PORT = "3307"
-MYSQL_DB = "ecommerce_db"
+MYSQL_PORT = "3308"
+MYSQL_DB = "ecommerce_database"
 
 # 🧠 SQLAlchemy connection string (MySQL with mysql-connector)
 DATABASE_URL = (
