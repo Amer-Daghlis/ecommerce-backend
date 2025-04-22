@@ -3,7 +3,9 @@ from sqlalchemy.orm import Session
 from ..database import SessionLocal
 from . import user_schema, user_db
 from .security import verify_password
-
+from google.oauth2 import id_token
+from google.auth.transport import requests as google_requests
+from fastapi import Request
 router = APIRouter(prefix="/users", tags=["Users"])
 
 # Database session dependency
@@ -46,3 +48,24 @@ def get_all_users(db: Session = Depends(get_db)):
     return user_db.get_all_users(db)
 
 
+@router.post("/google-login")
+async def google_login(request: Request, db: Session = Depends(get_db)):
+    data = await request.json()
+    print("Received JSON from frontend:", data)  # ✅ Add this
+
+    token = data.get("token")  # ✅ Make sure this matches frontend key
+
+    if not token:
+        raise HTTPException(status_code=400, detail="No token received")
+
+    try:
+        idinfo = id_token.verify_oauth2_token(token, google_requests.Request())
+        email = idinfo["email"]
+        name = idinfo.get("name", "")
+
+        user = user_db.get_or_create_google_user(db, email, name)
+
+        return {"message": "Login successful", "user_id": user.user_id, "email": user.user_email}
+
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=f"Google token verification failed: {str(e)}")

@@ -3,6 +3,7 @@ from sqlalchemy.orm import Session
 from models.database import Base
 from .user_schema import UserCreate
 from .security import hash_password
+from datetime import datetime
 
 # SQLAlchemy ORM model for the User table
 class User(Base):
@@ -55,4 +56,21 @@ def delete_user(db: Session, user_id: int):
     if user:
         db.delete(user)
         db.commit()
+    return user
+
+
+def get_or_create_google_user(db: Session, email: str, name: str):
+    user = db.query(User).filter_by(user_email=email).first()
+    if user:
+        return user
+
+    user = User(
+        user_email=email,
+        user_name=name,
+        user_status=True,
+        signed_at=datetime.utcnow()
+    )
+    db.add(user)
+    db.commit()
+    db.refresh(user)
     return user
