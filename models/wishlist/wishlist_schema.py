@@ -27,3 +27,43 @@ class WishlistItemOut(BaseModel):
 
     class Config:
         orm_mode = True
+
+#  Wishlist count response
+class UserWishlistCount(BaseModel):
+    user_id: int
+    wishlist_count: int
+
+    class Config:
+        from_attributes = True
+
+
+# Get wishlist items for a user
+
+#  Attachment schema (photos)
+class ProductAttachmentOut(BaseModel):
+    attachment_link: str
+
+    class Config:
+        orm_mode = True
+
+# ✅ Full product schema for wishlist
+class WishlistProductOut(BaseModel):
+    product_id: int
+    product_name: str
+    product_rating: Optional[int]
+    how_use_it: Optional[str]
+    selling_price: float
+    availability_status: Optional[bool]
+    attachments: List[str] = []  # List of image links
+
+    class Config:
+        orm_mode = True
+
+# ✅ Full user wishlist response
+class UserWishlistOut(BaseModel):
+    user_id: int
+    wishlist: List[WishlistProductOut]
+
+    class Config:
+        orm_mode = True
+        

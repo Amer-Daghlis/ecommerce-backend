@@ -1,13 +1,28 @@
-from sqlalchemy import Column, Integer, String, Boolean, Date
+from sqlalchemy import Column, Integer, String, Boolean, Date, Enum
 from sqlalchemy.orm import Session
-from models.database import Base
+from models.database import Base  # Not user_db itself
 from .user_schema import UserCreate
 from .security import hash_password
+import enum
 from datetime import datetime
 
-# SQLAlchemy ORM model for the User table
+#  Define address enum
+class AddressEnum(enum.Enum):
+    Jenin = "Jenin"
+    Tulkarm = "Tulkarm"
+    Nablus = "Nablus"
+    Qalqilya = "Qalqilya"
+    Tubas = "Tubas"
+    Salfit = "Salfit"
+    Ramallah = "Ramallah and Al-Bireh"
+    Jericho = "Jericho and Al-Aghwar"
+    Bethlehem = "Bethlehem"
+    Hebron = "Hebron"
+    Jerusalem = "Jerusalem"
+
+#  User ORM model
 class User(Base):
-    __tablename__ = "user"  # ✅ match actual MySQL table name (usually lowercase)
+    __tablename__ = "user"
 
     user_id = Column(Integer, primary_key=True, index=True)
     user_email = Column(String(255), nullable=False)
@@ -17,10 +32,9 @@ class User(Base):
     user_status = Column(Boolean)
     signed_at = Column(Date)
     community_activity_count = Column(Integer, default=0)
+    address = Column(Enum(AddressEnum), nullable=True)  # ✅ New field
 
-# --- Database Operation Methods ---
-
-# ✅ Create a new user (sign up)
+# Create a new user (sign up)
 def create_user(db: Session, user: UserCreate):
     hashed_pw = hash_password(user.user_password)
     new_user = User(
@@ -74,3 +88,24 @@ def get_or_create_google_user(db: Session, email: str, name: str):
     db.commit()
     db.refresh(user)
     return user
+
+
+# Get signup date of a user
+def get_user_signup_date(db: Session, user_id: int):
+    user = db.query(User).filter(User.user_id == user_id).first()
+    if user:
+        return user.signed_at
+    return None
+
+
+# ✅ Get user address by ID
+def get_user_address(db: Session, user_id: int):
+    user = db.query(User).filter(User.user_id == user_id).first()
+    return user.address if user else None
+
+
+
+#  Get only contact info for user
+def get_user_contact_info(db: Session, user_id: int):
+    user = db.query(User).filter(User.user_id == user_id).first()
+    return user  # We return the whole user object, Pydantic will filter fields

@@ -32,3 +32,11 @@ def add_product_to_cart(data: cart_schema.AddToCartRequest, db: Session = Depend
 def get_cart_product_count(user_id: int, db: Session = Depends(get_db)):
     count = cart_db.get_cart_product_count(db, user_id)
     return {"user_id": user_id, "product_count": count}
+
+
+@router.get("/products/{cart_id}")
+def get_products_in_cart(cart_id: int, db: Session = Depends(get_db)):
+    products = cart_db.get_products_in_cart_by_cart_id(db, cart_id)
+    if not products:
+        return {"message": "Cart is empty or not found."}
+    return products

@@ -2,6 +2,8 @@ from sqlalchemy import Column, Integer, Float, ForeignKey, func
 from sqlalchemy.orm import Session
 from models.database import Base
 from models.product.product_db import Product
+from models.product.attachment_product_db import AttachmentProduct
+from models.companies.company_db import Company
 
 
 class Cart(Base):
@@ -59,3 +61,35 @@ def get_cart_product_count(db: Session, user_id: int):
               .filter(CartProduct.cart_id == cart.cart_id)\
               .scalar()
     return count
+
+
+def get_products_in_cart_by_cart_id(db: Session, cart_id: int):
+    cart_products = (
+        db.query(CartProduct, Product)
+        .join(Product, CartProduct.product_id == Product.product_id)
+        .filter(CartProduct.cart_id == cart_id)
+        .all()
+    )
+
+    result = []
+    for cart_product, product in cart_products:
+        # Get brand name
+        company = db.query(Company).filter(Company.company_id == product.company_id).first()
+        brand = company.company_name if company else ""
+
+        # Get first image
+        image_obj = db.query(AttachmentProduct).filter(AttachmentProduct.product_id == product.product_id).first()
+        image_url = image_obj.attachment_link if image_obj else ""
+
+        result.append({
+            "id": product.product_id,
+            "name": product.product_name,
+            "price": product.selling_price,
+            "quantity": cart_product.quantity,  # ✅ from CartProduct
+            "brand": brand,
+            "discount": product.offer_percentage or 0,
+            "quantityAvailable": product.remaining_quantity,
+            "image": image_url
+        })
+
+    return result

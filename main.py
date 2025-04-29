@@ -5,7 +5,9 @@ from models.cart import cart_api
 from models.categories import category_api
 from models.companies import company_api
 from models.wishlist import wishlist_api
+from models.order import order_api  
 from fastapi.middleware.cors import CORSMiddleware
+from models.Payment import pay_api   
 
 
 app = FastAPI()
@@ -25,3 +27,6 @@ app.include_router(cart_api.router)
 app.include_router(category_api.router)
 app.include_router(company_api.router)
 app.include_router(wishlist_api.router)
+app.include_router(order_api.router)
+app.include_router(pay_api.router)
+

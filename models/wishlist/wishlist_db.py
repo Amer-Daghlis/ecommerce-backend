@@ -37,3 +37,23 @@ def remove_from_wishlist(db: Session, user_id: int, product_id: int):
     db.delete(item)
     db.commit()
     return True, None
+
+
+#  Get number of wishlist items for a user
+def get_user_wishlist_count(db: Session, user_id: int):
+    return db.query(func.count(Favorite.product_id))\
+             .filter(Favorite.user_id == user_id)\
+             .scalar()
+
+
+# Get all wishlist products for a user
+def get_user_wishlist_products(db: Session, user_id: int):
+    wishlist_items = db.query(Product)\
+                       .join(Favorite, Product.product_id == Favorite.product_id)\
+                       .filter(Favorite.user_id == user_id)\
+                       .all()
+
+    # Add attachments (photos) for each product
+    for product in wishlist_items:
+        product.attachments = get_attachments_by_product_id(db, product.product_id)
+    return wishlist_items

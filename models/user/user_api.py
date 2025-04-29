@@ -69,3 +69,34 @@ async def google_login(request: Request, db: Session = Depends(get_db)):
 
     except Exception as e:
         raise HTTPException(status_code=400, detail=f"Google token verification failed: {str(e)}")
+
+# GET: Get signup date by user_id
+@router.get("/signup-date/{user_id}", response_model=user_schema.UserSignupDate)
+def get_user_signup_date(user_id: int, db: Session = Depends(get_db)):
+    signup_date = user_db.get_user_signup_date(db, user_id)
+    if signup_date is None:
+        raise HTTPException(status_code=404, detail="User not found")
+    
+    return {
+        "user_id": user_id,
+        "signup_date": signup_date
+    }
+
+
+
+# GET: Get address by user_id
+@router.get("/address/{user_id}", response_model=user_schema.UserAddress)
+def get_user_address(user_id: int, db: Session = Depends(get_db)):
+    address = user_db.get_user_address(db, user_id)
+    if address is None:
+        raise HTTPException(status_code=404, detail="User or address not found")
+    return {"user_id": user_id, "address": address}
+
+
+# GET: User contact info (name, email, phone, address)
+@router.get("/contact/{user_id}", response_model=user_schema.UserContactInfo)
+def get_user_contact_info(user_id: int, db: Session = Depends(get_db)):
+    user = user_db.get_user_contact_info(db, user_id)
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    return user
