@@ -91,6 +91,22 @@ def get_or_create_google_user(db: Session, email: str, name: str):
     db.refresh(user)
     return user
 
+    # Get or create Facebook user
+def get_or_create_facebook_user(db: Session, email: str, name: str):
+    user = db.query(User).filter_by(user_email= email).first()
+    if user:
+        return user
+
+    user = User(
+       user_email=email,
+        user_name=name,
+        user_status=True,
+        signed_at=datetime.utcnow()
+    )
+    db.add(user)
+    db.commit()
+    db.refresh(user)
+    return user
 
 # Get signup date of a user
 def get_user_signup_date(db: Session, user_id: int):

@@ -1,13 +1,14 @@
+import requests  # Add this import for making HTTP requests
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from ..database import SessionLocal
 from . import user_schema, user_db
-from .security import verify_password
+from .security import verify_password, hash_password
 from google.oauth2 import id_token
 from google.auth.transport import requests as google_requests
 from fastapi import Request
-
 from pydantic import BaseModel
+
 
 router = APIRouter(prefix="/users", tags=["Users"])
 
@@ -50,6 +51,43 @@ def get_users_by_name(username: str, db: Session = Depends(get_db)):
 def get_all_users(db: Session = Depends(get_db)):
     return user_db.get_all_users(db)
 
+
+@router.post("/facebook-login")
+async def facebook_login(request: Request, db: Session = Depends(get_db)):
+    data = await request.json()
+    access_token = data.get("accessToken")  # Token from frontend
+
+    if not access_token:
+        raise HTTPException(status_code=400, detail="No access token received")
+
+    print("Received access token:", access_token)
+
+    try:
+        # Verify the Facebook token
+        app_id = ""  # Replace with your Facebook app ID
+        app_secret = ""  # Replace with your Facebook app secret
+        url = f"https://graph.facebook.com/me?access_token={access_token}&fields=id,name,email"
+        
+        # Make a request to Facebook Graph API
+        response = requests.get(url)
+        fb_data = response.json()
+        print("Facebook API response:", fb_data)
+
+        if "error" in fb_data:
+            raise HTTPException(status_code=400, detail="Facebook login failed")
+
+        # Extract user info from Facebook response
+        email = fb_data.get("email")
+        name = fb_data.get("name")
+
+        # Handle user login/signup from Facebook
+        user = user_db.get_or_create_facebook_user(db, email, name)
+        
+        return {"message": "Login successful", "user_id": user.user_id, "email": user.user_email}
+
+    except Exception as e:
+        print("Error during Facebook login:", str(e))
+        raise HTTPException(status_code=400, detail=f"Facebook login failed: {str(e)}")
 
 @router.post("/google-login")
 async def google_login(request: Request, db: Session = Depends(get_db)):
