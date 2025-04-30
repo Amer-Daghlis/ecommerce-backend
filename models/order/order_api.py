@@ -33,35 +33,106 @@ def get_all_orders_for_user(user_id: int, db: Session = Depends(get_db)):
 #************************************** Admin Section *****************************************#
 
 # Get the revenue for the current month
-@router.get("/revenue/month", response_model=order_schema.MonthlyRevenue)
-def get_monthly_revenue(db: Session = Depends(get_db)):
+@router.get("/revenue/month", response_model=list[order_schema.MonthlyRevenue])
+def get_monthly_and_previous_revenue(db: Session = Depends(get_db)):
     from datetime import datetime
     now = datetime.now()
-    total = order_db.get_monthly_revenue(db)
-    return {
-        "month": now.month,
-        "year": now.year,
-        "total_revenue": total
-    }
+
+    # Current month
+    current_month = now.month
+    current_year = now.year
+
+    # Previous month logic
+    if now.month == 1:
+        previous_month = 12
+        previous_year = now.year - 1
+    else:
+        previous_month = now.month - 1
+        previous_year = now.year
+
+    current_revenue = order_db.get_revenue_for_month(db, current_year, current_month)
+    previous_revenue = order_db.get_revenue_for_month(db, previous_year, previous_month)
+
+    return [
+        {"month": current_month, "year": current_year, "total_revenue": current_revenue},
+        {"month": previous_month, "year": previous_year, "total_revenue": previous_revenue}
+    ]
 
 #Get the total number of orders for the current month
-@router.get("/orders-in-month", response_model=order_schema.MonthlyOrderCount)
-def get_monthly_order_count(db: Session = Depends(get_db)):
+@router.get("/orders-in-month", response_model=list[order_schema.MonthlyOrderCount])
+def get_current_and_previous_month_order_counts(db: Session = Depends(get_db)):
     from datetime import datetime
     now = datetime.now()
-    count = order_db.get_monthly_order_count(db)
-    return {
-        "month": now.month,
-        "year": now.year,
-        "total_orders": count
-    }
 
+    # Current month
+    current_month = now.month
+    current_year = now.year
+
+    # Previous month logic
+    if now.month == 1:
+        previous_month = 12
+        previous_year = now.year - 1
+    else:
+        previous_month = now.month - 1
+        previous_year = now.year
+
+    current_count = order_db.get_order_count_for_month(db, current_year, current_month)
+    previous_count = order_db.get_order_count_for_month(db, previous_year, previous_month)
+
+    return [
+        {"month": current_month, "year": current_year, "total_orders": current_count},
+        {"month": previous_month, "year": previous_year, "total_orders": previous_count}
+    ]
 # Get the total number of products bought in the current month
-@router.get("/products-bought/month")
-def get_products_bought_this_month(db: Session = Depends(get_db)):
-    return order_db.get_total_products_bought_this_month(db)
+@router.get("/products-bought/month", response_model=list[order_schema.MonthlyProductsBought])
+def get_products_bought_this_and_last_month(db: Session = Depends(get_db)):
+    from datetime import datetime
+    now = datetime.now()
+
+    current_month = now.month
+    current_year = now.year
+
+    if now.month == 1:
+        previous_month = 12
+        previous_year = now.year - 1
+    else:
+        previous_month = now.month - 1
+        previous_year = now.year
+
+    current_count = order_db.get_products_bought_by_month(db, current_year, current_month)
+    previous_count = order_db.get_products_bought_by_month(db, previous_year, previous_month)
+
+    return [
+        {
+            "month": current_month,
+            "year": current_year,
+            "total_products_bought": current_count
+        },
+        {
+            "month": previous_month,
+            "year": previous_year,
+            "total_products_bought": previous_count
+        }
+    ]
+
 
 # Get the total number of customers who placed orders in the current month
-@router.get("/customers/month")
-def get_total_customers_this_month(db: Session = Depends(get_db)):
-    return order_db.get_total_customers_this_month(db)
+@router.get("/customers/month", response_model=list[order_schema.MonthlyCustomerCount])
+def get_customers_this_and_last_month(db: Session = Depends(get_db)):
+    from datetime import datetime
+    now = datetime.now()
+
+    current_month = now.month
+    current_year = now.year
+
+    if current_month == 1:
+        previous_month = 12
+        previous_year = current_year - 1
+    else:
+        previous_month = current_month - 1
+        previous_year = current_year
+
+    current_data = order_db.get_customer_count_by_month(db, current_year, current_month)
+    previous_data = order_db.get_customer_count_by_month(db, previous_year, previous_month)
+
+    return [current_data, previous_data]

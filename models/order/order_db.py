@@ -41,56 +41,42 @@ def get_all_orders_for_user(db: Session, user_id: int):
 
 #************************************** Admin Section *****************************************#
 # Total revenue for current month
-def get_monthly_revenue(db: Session):
-    from datetime import datetime
-    now = datetime.now()
-
+def get_revenue_for_month(db: Session, year: int, month: int) -> float:
     revenue = db.query(func.sum(OrderTable.total_price))\
-        .filter(extract("month", OrderTable.order_date) == now.month)\
-        .filter(extract("year", OrderTable.order_date) == now.year)\
+        .filter(extract("month", OrderTable.order_date) == month)\
+        .filter(extract("year", OrderTable.order_date) == year)\
         .scalar()
+    return revenue or 0.0
 
-    return revenue or 0.0  # Return 0 if None
 
 # Get total number of orders for the current month
-def get_monthly_order_count(db: Session):
-    from datetime import datetime
-    now = datetime.now()
-
+def get_order_count_for_month(db: Session, year: int, month: int) -> int:
     count = db.query(func.count(OrderTable.order_id))\
-        .filter(extract("month", OrderTable.order_date) == now.month)\
-        .filter(extract("year", OrderTable.order_date) == now.year)\
-        .scalar()
+              .filter(extract("month", OrderTable.order_date) == month)\
+              .filter(extract("year", OrderTable.order_date) == year)\
+              .scalar()
+    return count or 0
 
-    return count or 0  # Return 0 if None
 
 # Get total number of products bought this month
-def get_total_products_bought_this_month(db: Session):
-    current_month = datetime.now().month
-    current_year = datetime.now().year
-
+def get_products_bought_by_month(db: Session, year: int, month: int) -> int:
     count = db.query(OrderProduct)\
-              .join(OrderTable, OrderProduct.order_id == OrderTable.order_id)\
-              .filter(extract('month', OrderTable.order_date) == current_month)\
-              .filter(extract('year', OrderTable.order_date) == current_year)\
-              .count()
+        .join(OrderTable, OrderProduct.order_id == OrderTable.order_id)\
+        .filter(extract('month', OrderTable.order_date) == month)\
+        .filter(extract('year', OrderTable.order_date) == year)\
+        .count()
 
-    return {"products_bought_this_month": count}
+    return count or 0
 
 
 # Get count of distinct users who placed orders this month (with month name)
-def get_total_customers_this_month(db: Session):
-    now = datetime.now()
-    current_month = now.month
-    current_year = now.year
-    month_name = now.strftime("%B")  # e.g., "April"
-
-    total_customers = db.query(func.count(func.distinct(OrderTable.user_id)))\
-        .filter(extract('month', OrderTable.order_date) == current_month)\
-        .filter(extract('year', OrderTable.order_date) == current_year)\
+def get_customer_count_by_month(db: Session, year: int, month: int) -> dict:
+    month_name = datetime(year, month, 1).strftime("%B")
+    count = db.query(func.count(func.distinct(OrderTable.user_id)))\
+        .filter(extract('month', OrderTable.order_date) == month)\
+        .filter(extract('year', OrderTable.order_date) == year)\
         .scalar()
-
     return {
         "month": month_name,
-        "total_customers": total_customers
+        "total_customers": count or 0
     }

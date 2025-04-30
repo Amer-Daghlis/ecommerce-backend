@@ -6,6 +6,9 @@ from .security import verify_password
 from google.oauth2 import id_token
 from google.auth.transport import requests as google_requests
 from fastapi import Request
+
+from pydantic import BaseModel
+
 router = APIRouter(prefix="/users", tags=["Users"])
 
 # Database session dependency
@@ -100,3 +103,29 @@ def get_user_contact_info(user_id: int, db: Session = Depends(get_db)):
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
     return user
+
+
+#************************************** Admin Section *****************************************#
+
+# GET: Get all users (Admin only)
+@router.get("/admin/users", response_model=list[user_schema.AdminUserOut])
+def get_all_admin_user_data(db: Session = Depends(get_db)):
+    return user_db.get_admin_users(db)
+
+#
+class UserStatusUpdate(BaseModel):
+    status: int  # 0 or 1
+
+@router.post("/set-status/{user_id}")
+def post_set_user_status(user_id: int, data: UserStatusUpdate, db: Session = Depends(get_db)):
+    if data.status not in [0, 1]:
+        raise HTTPException(status_code=400, detail="Status must be 0 or 1")
+    
+    user = user_db.set_user_status(db, user_id, data.status)
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    
+    return {
+        "message": f"User {user_id} status updated",
+        "status": 1 if user.user_status else 0
+    }

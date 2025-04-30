@@ -37,6 +37,7 @@ class MonthlyRevenue(BaseModel):
         from_attributes = True
 
 
+
 class MonthlyOrderCount(BaseModel):
     month: int
     year: int
@@ -45,10 +46,19 @@ class MonthlyOrderCount(BaseModel):
     class Config:
         from_attributes = True
 
+
 class MonthlyProductsBought(BaseModel):
     month: int
     year: int
     total_products_bought: int
+
+    class Config:
+        from_attributes = True
+
+
+class MonthlyCustomerCount(BaseModel):
+    month: str  # e.g., "April"
+    total_customers: int
 
     class Config:
         from_attributes = True

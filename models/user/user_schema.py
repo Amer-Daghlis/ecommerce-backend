@@ -44,3 +44,20 @@ class UserContactInfo(BaseModel):
 
     class Config:
         from_attributes = True
+
+
+#************************************** Admin Section *****************************************#
+class AdminUserOut(BaseModel):
+    id: int
+    name: str | None = None
+    email: str
+    phone: str | None = None
+    location: str | None = None  
+    orders: int
+    spent: float
+    lastOrder: date | None = None
+    status: int  
+    avatar: str | None = None  
+
+    class Config:
+        from_attributes = True

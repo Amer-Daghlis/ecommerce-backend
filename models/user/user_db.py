@@ -5,6 +5,8 @@ from .user_schema import UserCreate
 from .security import hash_password
 import enum
 from datetime import datetime
+from models.order.order_db import OrderTable
+from sqlalchemy import func
 
 #  Define address enum
 class AddressEnum(enum.Enum):
@@ -32,8 +34,8 @@ class User(Base):
     user_status = Column(Boolean)
     signed_at = Column(Date)
     community_activity_count = Column(Integer, default=0)
-    address = Column(Enum(AddressEnum), nullable=True)  # ✅ New field
-
+    address = Column(Enum(AddressEnum), nullable=True)
+    photo = Column(String(255), nullable=True)
 # Create a new user (sign up)
 def create_user(db: Session, user: UserCreate):
     hashed_pw = hash_password(user.user_password)
@@ -109,3 +111,45 @@ def get_user_address(db: Session, user_id: int):
 def get_user_contact_info(db: Session, user_id: int):
     user = db.query(User).filter(User.user_id == user_id).first()
     return user  # We return the whole user object, Pydantic will filter fields
+
+
+
+#************************************** Admin Section *****************************************#
+
+
+# Custom admin output with joins + formatting
+def get_admin_users(db: Session):
+    users = db.query(User).all()
+    data = []
+
+    for user in users:
+        orders = db.query(OrderTable).filter(OrderTable.user_id == user.user_id).all()
+        total_spent = sum([order.total_price or 0 for order in orders])
+        order_count = len(orders)
+        last_order = max([o.order_date for o in orders], default=None)
+
+        data.append({
+            "id": user.user_id,
+            "name": user.user_name,
+            "email": user.user_email,
+            "phone": user.phone_number,
+            "location": user.address,
+            "orders": order_count,
+            "spent": total_spent,
+            "lastOrder": last_order,
+            "status": 1 if user.user_status else 0,  
+            "avatar": user.photo
+        })
+
+    return data
+
+
+# Set user status using 1 or 0
+def set_user_status(db: Session, user_id: int, status: int):
+    user = db.query(User).filter(User.user_id == user_id).first()
+    if not user:
+        return None
+    user.user_status = bool(status)  # 1 → True, 0 → False
+    db.commit()
+    db.refresh(user)
+    return user

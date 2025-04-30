@@ -27,6 +27,11 @@ async def create_checkout_session(request: Request):
             success_url="http://localhost:5173/checkout/success",
             cancel_url="http://localhost:5173/checkout/failed",
         )
+        # ✅ Print session details for debugging
+        if session:
+            print("Session created successfully:", session)
         return {"url": session.url}
     except Exception as e:
+        # Log the error for debugging
+        print("Error creating checkout session:", str(e))
         return {"error": str(e)}
