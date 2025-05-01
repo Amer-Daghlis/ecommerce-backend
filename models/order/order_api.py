@@ -53,10 +53,10 @@ def get_monthly_and_previous_revenue(db: Session = Depends(get_db)):
     current_revenue = order_db.get_revenue_for_month(db, current_year, current_month)
     previous_revenue = order_db.get_revenue_for_month(db, previous_year, previous_month)
 
-    return [
-        {"month": current_month, "year": current_year, "total_revenue": current_revenue},
-        {"month": previous_month, "year": previous_year, "total_revenue": previous_revenue}
-    ]
+    return  [
+    {"month": current_month, "year": current_year, "total_revenue": current_revenue},
+    {"month": previous_month, "year": previous_year, "total_revenue": previous_revenue}
+]
 
 #Get the total number of orders for the current month
 @router.get("/orders-in-month", response_model=list[order_schema.MonthlyOrderCount])
