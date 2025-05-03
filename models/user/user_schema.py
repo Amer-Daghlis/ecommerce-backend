@@ -1,5 +1,9 @@
 from pydantic import BaseModel
 from datetime import date
+from sqlalchemy import Column, Integer, String, DateTime
+from sqlalchemy.ext.declarative import declarative_base
+
+Base = declarative_base()
 
 class UserBase(BaseModel):
     user_email: str
@@ -45,7 +49,15 @@ class UserContactInfo(BaseModel):
     class Config:
         from_attributes = True
 
+class UserVerify(BaseModel):
+    user_email: str
 
+class CodeVerification(BaseModel):
+    email: str
+    code: str
+
+class CheckUserEmailDefine(BaseModel):
+    user_email: str
 #************************************** Admin Section *****************************************#
 class AdminUserOut(BaseModel):
     id: int

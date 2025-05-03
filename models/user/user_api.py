@@ -1,13 +1,15 @@
-import requests  # Add this import for making HTTP requests
+import requests
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from ..database import SessionLocal
 from . import user_schema, user_db
-from .security import verify_password, hash_password
+from .security import verify_password, hash_password, send_verification_email, generate_verification_code
 from google.oauth2 import id_token
 from google.auth.transport import requests as google_requests
 from fastapi import Request
 from pydantic import BaseModel
+from datetime import datetime, timedelta 
+from .user_db import VerificationCode
 
 
 router = APIRouter(prefix="/users", tags=["Users"])
@@ -20,10 +22,60 @@ def get_db():
     finally:
         db.close()
 
+# POST: Check email in database (for signup)✅
+@router.post("/check-email")
+def check_email(data: user_schema.CheckUserEmailDefine, db: Session = Depends(get_db)):
+    db_user = user_db.get_user_by_email(db, data.user_email)
+    if db_user:
+        return {"IsUserDefined": True}
+    return {"IsUserDefined": False}
+#  POST: Verify email (send verification code)✅
+@router.post("/verify-email")
+def send_verification_code(data: user_schema.UserVerify, db: Session = Depends(get_db)):
+    code = generate_verification_code()
+    expires_at = datetime.utcnow() + timedelta(minutes=1)
+
+    # Check if the email already exists in the database
+    existing = db.query(VerificationCode).filter_by(email=data.user_email).first()
+    if existing:
+        # Update the existing record
+        existing.code = code
+        existing.expires_at = expires_at
+    else:
+        # Create a new record
+        new_entry = VerificationCode(email=data.user_email, code=code, expires_at=expires_at)
+        db.add(new_entry)
+
+    try:
+        db.commit()
+        send_verification_email(data.user_email, code)
+        return {"message": "Verification code sent"}
+    except Exception as e:
+        db.rollback()  # Rollback the transaction in case of an error
+        raise HTTPException(status_code=500, detail=f"Failed to send verification code: {e}")
+
+@router.post("/checkCode")
+def verify_code(data: user_schema.CodeVerification, db: Session = Depends(get_db)):
+    entry = db.query(VerificationCode).filter_by(email=data.email).first()
+    print("Received email:", data.email)
+    print("Received code:", data.code)
+    print("Found in DB:", entry.code if entry else "No entry")
+    if not entry or entry.code != data.code:
+        raise HTTPException(status_code=400, detail="Invalid verification code")
+    if datetime.utcnow() > entry.expires_at:
+        raise HTTPException(status_code=400, detail="Verification code expired")
+    
+    return {"message": "Email verified successfully"}
+
+
+
 #  POST: Sign up user (register)✅
-@router.post("/signup", response_model=user_schema.UserOut)
+@router.post("/signup")  # ← no response_model
 def signup_user(user: user_schema.UserCreate, db: Session = Depends(get_db)):
-    return user_db.create_user(db, user)
+    new_user = user_db.create_user(db, user)
+    return {"user_id": new_user.user_id}
+
+
 
 #  POST: Sign in user (validate email & password)✅
 @router.post("/signin")

@@ -1,5 +1,6 @@
-from sqlalchemy import Column, Integer, String, Boolean, Date, Enum
+from sqlalchemy import Column, Integer, String, Boolean, Date, Enum, DateTime, ForeignKey
 from sqlalchemy.orm import Session
+from sqlalchemy.ext.declarative import declarative_base
 from models.database import Base  # Not user_db itself
 from .user_schema import UserCreate
 from .security import hash_password
@@ -8,7 +9,7 @@ from datetime import datetime
 from models.order.order_db import OrderTable
 from sqlalchemy import func
 
-#  Define address enum
+# Define address enum
 class AddressEnum(enum.Enum):
     Jenin = "Jenin"
     Tulkarm = "Tulkarm"
@@ -22,7 +23,7 @@ class AddressEnum(enum.Enum):
     Hebron = "Hebron"
     Jerusalem = "Jerusalem"
 
-#  User ORM model
+# User ORM model
 class User(Base):
     __tablename__ = "user"
 
@@ -36,6 +37,7 @@ class User(Base):
     community_activity_count = Column(Integer, default=0)
     address = Column(Enum(AddressEnum), nullable=True)
     photo = Column(String(255), nullable=True)
+
 # Create a new user (sign up)
 def create_user(db: Session, user: UserCreate):
     hashed_pw = hash_password(user.user_password)
@@ -43,7 +45,6 @@ def create_user(db: Session, user: UserCreate):
         user_email=user.user_email,
         user_password=hashed_pw,
         user_name=user.user_name,
-        phone_number=user.phone_number
     )
     db.add(new_user)
     db.commit()
@@ -74,7 +75,6 @@ def delete_user(db: Session, user_id: int):
         db.commit()
     return user
 
-
 def get_or_create_google_user(db: Session, email: str, name: str):
     user = db.query(User).filter_by(user_email=email).first()
     if user:
@@ -91,14 +91,14 @@ def get_or_create_google_user(db: Session, email: str, name: str):
     db.refresh(user)
     return user
 
-    # Get or create Facebook user
+# Get or create Facebook user
 def get_or_create_facebook_user(db: Session, email: str, name: str):
-    user = db.query(User).filter_by(user_email= email).first()
+    user = db.query(User).filter_by(user_email=email).first()
     if user:
         return user
 
     user = User(
-       user_email=email,
+        user_email=email,
         user_name=name,
         user_status=True,
         signed_at=datetime.utcnow()
@@ -115,23 +115,24 @@ def get_user_signup_date(db: Session, user_id: int):
         return user.signed_at
     return None
 
-
 # ✅ Get user address by ID
 def get_user_address(db: Session, user_id: int):
     user = db.query(User).filter(User.user_id == user_id).first()
     return user.address if user else None
 
-
-
-#  Get only contact info for user
+# Get only contact info for user
 def get_user_contact_info(db: Session, user_id: int):
     user = db.query(User).filter(User.user_id == user_id).first()
     return user  # We return the whole user object, Pydantic will filter fields
 
-
+class VerificationCode(Base):
+    __tablename__ = "verification_codes"
+    id = Column(Integer, primary_key=True, index=True)
+    email = Column(String, unique=True, index=True)
+    code = Column(String)
+    expires_at = Column(DateTime)
 
 #************************************** Admin Section *****************************************#
-
 
 # Custom admin output with joins + formatting
 def get_admin_users(db: Session):
@@ -153,12 +154,11 @@ def get_admin_users(db: Session):
             "orders": order_count,
             "spent": total_spent,
             "lastOrder": last_order,
-            "status": 1 if user.user_status else 0,  
+            "status": 1 if user.user_status else 0,
             "avatar": user.photo
         })
 
     return data
-
 
 # Set user status using 1 or 0
 def set_user_status(db: Session, user_id: int, status: int):
