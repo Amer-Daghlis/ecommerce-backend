@@ -14,6 +14,7 @@ import os
 from ..cart.cart_db import get_or_create_cart
 
 
+# Import necessary modules
 router = APIRouter(prefix="/users", tags=["Users"])
 
 # Database session dependency
