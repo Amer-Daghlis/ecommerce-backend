@@ -1,14 +1,16 @@
 import stripe
 from fastapi import APIRouter, Request, HTTPException
-
+import os
 # stripe.api_key = "Hi"
 # sk_test_51RJJt3FkDDARsLBEGENSkAMjPv9vX5xTaaDUfQL1xWq2fumeJ0ohaaHYDypLK8MC585jYPxUO5cGQjx62nTY13iH00JwpE7qOp
+stripe.api_key = os.getenv("STRIPE_API_KEY")  # Load the key from environment variables
 router = APIRouter()
 
 @router.post("/create-checkout-session")
 async def create_checkout_session(request: Request):
     data = await request.json()
     cart = data.get("cart", [])
+
 
     try:
         line_items = []
