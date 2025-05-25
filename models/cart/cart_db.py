@@ -8,7 +8,7 @@ from models.companies.company_db import Company
 
 class Cart(Base):
     __tablename__ = "cart"
-    cart_id = Column(Integer, primary_key=True, index=True)
+    cart_id = Column(Integer, primary_key=True)
     user_id = Column(Integer, ForeignKey("user.user_id"))
     total_price = Column(Float, default=0.0)
 
@@ -24,7 +24,7 @@ class CartProduct(Base):
 def get_or_create_cart(db: Session, user_id: int):
     cart = db.query(Cart).filter(Cart.user_id == user_id).first()
     if not cart:
-        cart = Cart(user_id=user_id, total_price=0.0)
+        cart = Cart(cart_id= user_id, user_id=user_id, total_price=0.0)
         db.add(cart)
         db.commit()
         db.refresh(cart)
@@ -53,6 +53,7 @@ def add_to_cart(db: Session, user_id: int, product_id: int, quantity: int):
 
 # 📦 Get number of unique products in the user's cart
 def get_cart_product_count(db: Session, user_id: int):
+    test = get_or_create_cart(db, user_id)
     cart = db.query(Cart).filter(Cart.user_id == user_id).first()
     if not cart:
         return 0  # No cart yet
@@ -93,3 +94,13 @@ def get_products_in_cart_by_cart_id(db: Session, cart_id: int):
         })
 
     return result
+
+
+def set_cart_empty(db: Session, cart_id: int):
+    db.query(CartProduct).filter(CartProduct.cart_id == cart_id).delete()
+
+    cart = db.query(Cart).filter(Cart.cart_id == cart_id).first()
+    if cart:
+        cart.total_price = 0.0
+
+    db.commit()

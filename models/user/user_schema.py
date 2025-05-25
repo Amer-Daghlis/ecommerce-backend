@@ -69,7 +69,16 @@ class AdminUserOut(BaseModel):
     spent: float
     lastOrder: date | None = None
     status: int  
-    avatar: str | None = None  
+    avatar: str | None = None
+    signed_at: date | None = None
+
+    class Config:
+        from_attributes = True
+
+class MonthlyUserJoin(BaseModel):
+    month: int
+    year: int
+    total_users: float
 
     class Config:
         from_attributes = True

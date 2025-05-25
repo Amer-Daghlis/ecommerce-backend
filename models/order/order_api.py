@@ -1,8 +1,10 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from models.database import SessionLocal
-from . import order_db, order_schema
-
+from . import order_db, order_schema, order_product_db
+from ..cart.cart_db import set_cart_empty
+from .TrackOrder_db import set_order_tracking
+from datetime import timedelta,date
 router = APIRouter(prefix="/orders", tags=["Orders"])
 
 def get_db():
@@ -29,6 +31,55 @@ def get_all_orders_for_user(user_id: int, db: Session = Depends(get_db)):
         raise HTTPException(status_code=404, detail="No orders found for this user.")
     return orders
 
+
+# ✅ POST: Insert Order
+@router.post("/insertDeliveryOrder")
+def insertOrder(order: order_schema.orderCreate, db: Session = Depends(get_db)):
+    from datetime import date, timedelta
+
+    # Prepare order data
+    order_data = order.dict()
+    order_data["order_status"] = "Order Placed"
+    order_data["order_date"] = date.today()
+    order_data["payment"] = False
+    order_data["payment_method"] = "Delivery"
+    order_data["estimated_delivery"] = date.today() + timedelta(days=3)
+
+    # Insert new order into the database
+    new_order = order_db.insert_onDelivery_order(db, order_data)
+
+    # Empty the cart after placing the order
+    try:
+        set_cart_empty(db, order_data["user_id"])
+
+        # Track the new order
+        set_order_tracking(
+            db,
+            order_id=new_order.order_id,
+            status="Order Placed",
+            order_date=order_data["order_date"],
+            location="Warehouse - Ramallah",
+            description="Order has been placed and is being processed."
+        )
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(status_code=500, detail=f"Failed to remove products from cart: {e}")
+
+    return {"status": True, "order_id": new_order.order_id}
+
+
+# ✅ POST: Add products to an order
+@router.post("/add-products")
+def add_products_to_order(data: order_schema.AddProductsToOrderRequest, db: Session = Depends(get_db)):
+    added_items = []
+    for product in data.products:
+        try:
+            item = order_product_db.add_product_to_order(db, data.order_id, product.product_id, product.quantity)
+            added_items.append(item)
+        except Exception as e:
+            db.rollback()
+            raise HTTPException(status_code=500, detail=f"Failed to add product {product.product_id} to order: {e}")
+    return {"message": "Products added to order successfully", "added_items": added_items}
 
 #************************************** Admin Section *****************************************#
 
@@ -136,3 +187,45 @@ def get_customers_this_and_last_month(db: Session = Depends(get_db)):
     previous_data = order_db.get_customer_count_by_month(db, previous_year, previous_month)
 
     return [current_data, previous_data]
+
+@router.get("/last-3-orders", response_model=list[order_schema.LastOrderOut])
+def get_last_3_orders(db: Session = Depends(get_db)):
+    orders = order_db.get_last_3_orders(db)
+    if not orders:
+        raise HTTPException(status_code=404, detail="No orders found.")
+    return orders
+
+@router.get("/all-customers-orders", response_model=list[order_schema.OrderOut])
+def get_all_customers_orders(db: Session = Depends(get_db)):
+    orders = order_db.get_all_customer_order(db)
+    if not orders:
+        raise HTTPException(status_code=404, detail="No orders found.")
+    return orders
+
+@router.get("/customer-orders/{user_id}", response_model=list[order_schema.CustomerOrderOut])
+def get_orders_for_customer_endpoint(user_id: int, db: Session = Depends(get_db)):
+    orders = order_db.get_orders_for_customer(db, user_id)
+    if not orders:
+        raise HTTPException(status_code=404, detail="No orders found for this customer.")
+    return orders
+
+@router.get("/customer-info-order/{order_id}", response_model=order_schema.CustomerInfoOrder)
+def get_name_email_customer_order(order_id: int, db: Session = Depends(get_db)):
+    customerInfo = order_db.get_customer_info_for_order(db, order_id)
+    if not customerInfo:
+        raise HTTPException(status_code=404, detail="Order not found.")
+    return customerInfo
+
+@router.get("/order-info/{order_id}", response_model=order_schema.orderInfo)
+def get_name_email_customer_order(order_id: int, db: Session = Depends(get_db)):
+    orderInfo = order_db.get_order_by_order_id(db, order_id)
+    if not orderInfo:
+        raise HTTPException(status_code=404, detail="Order not found.")
+    return orderInfo
+
+@router.get("/order-products/{order_id}", response_model=list[order_schema.ProductDetailsInOrder])
+def get_all_products_in_order_endpoint(order_id: int, db: Session = Depends(get_db)):
+    products = order_db.getAllProductsInOrder(db, order_id)
+    if not products:
+        raise HTTPException(status_code=404, detail="No products found for this order.")
+    return products

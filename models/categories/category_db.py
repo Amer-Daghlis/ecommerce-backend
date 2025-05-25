@@ -14,7 +14,7 @@ class Category(Base):
     category_name = Column(String(255), nullable=False)
 
     # 🔗 Relationship to product table
-    products = relationship("Product", backref="category")
+    products = relationship("Product", back_populates="category")
 
 # ✅ Get all categories
 def get_all_categories(db: Session):

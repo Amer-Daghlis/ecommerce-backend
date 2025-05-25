@@ -9,13 +9,11 @@ class OrderProduct(Base):
     order_id = Column(Integer, ForeignKey("OrderTable.order_id"), primary_key=True)
     product_id = Column(Integer, ForeignKey("product.product_id"), primary_key=True)
     quantity = Column(Integer, nullable=False)
+    order = relationship("OrderTable", back_populates="order_products")
+    product = relationship("Product", back_populates="order_products")
 
-    # Optional: Define relationships (can be useful for joins or ORM navigation)
-    # order = relationship("OrderTable", back_populates="products")
-    # product = relationship("Product")
 
 # ✅ Insert product into an order
-
 def add_product_to_order(db: Session, order_id: int, product_id: int, quantity: int):
     item = OrderProduct(
         order_id=order_id,

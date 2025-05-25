@@ -8,6 +8,9 @@ import enum
 from datetime import datetime
 from models.order.order_db import OrderTable
 from sqlalchemy import func
+from datetime import date
+from sqlalchemy.orm import relationship
+from sqlalchemy import extract, func
 
 # Define address enum
 class AddressEnum(enum.Enum):
@@ -37,15 +40,22 @@ class User(Base):
     community_activity_count = Column(Integer, default=0)
     address = Column(Enum(AddressEnum), nullable=True)
     photo = Column(String(255), nullable=True)
+    signed_method = Column(String(255), nullable=False)
+    token = Column(String(255), nullable=True)
+    user_reported_times = Column(Integer, default=0)
+    orders = relationship("OrderTable", back_populates="user")
 
-# Create a new user (sign up)
+# Create a new user (sign up) by email
 def create_user(db: Session, user: UserCreate):
     hashed_pw = hash_password(user.user_password)
     new_user = User(
         user_email=user.user_email,
         user_password=hashed_pw,
         user_name=user.user_name,
-    )
+        signed_method = "Email verification",
+        signed_at=date.today(),
+        user_status = True,
+        )
     db.add(new_user)
     db.commit()
     db.refresh(new_user)
@@ -68,41 +78,59 @@ def get_users_by_name(db: Session, name: str):
     return db.query(User).filter(User.user_name.like(f"%{name}%")).all()
 
 # ✅ Delete a user by ID
-def delete_user(db: Session, user_id: int):
+def set_user_status(db: Session, user_id: int, status: bool):
     user = db.query(User).filter(User.user_id == user_id).first()
     if user:
-        db.delete(user)
+        user.user_status = status
         db.commit()
+        db.refresh(user)
     return user
 
-def get_or_create_google_user(db: Session, email: str, name: str):
-    user = db.query(User).filter_by(user_email=email).first()
+def get_or_create_google_user(db: Session, email: str, name: str, token: str):
+    user = db.query(User).filter(User.user_email == email).first()
+
     if user:
+        user.token = token
+        user.signed_method = "Google"
+        user.user_status = True
+        db.commit()
+        db.refresh(user)
         return user
 
     user = User(
         user_email=email,
         user_name=name,
         user_status=True,
-        signed_at=datetime.utcnow()
+        signed_at=date.today(),
+        signed_method="Google",
+        token=token,
     )
     db.add(user)
     db.commit()
     db.refresh(user)
+
     return user
 
 # Get or create Facebook user
-def get_or_create_facebook_user(db: Session, email: str, name: str):
+def get_or_create_facebook_user(db: Session, email: str, name: str, token: str):
     user = db.query(User).filter_by(user_email=email).first()
     if user:
+        user.token = token
+        user.signed_method = "Facebook"
+        user.user_status = True
+        db.commit()
+        db.refresh(user)
         return user
 
     user = User(
         user_email=email,
         user_name=name,
         user_status=True,
-        signed_at=datetime.utcnow()
+        signed_at=date.today(),
+        signed_method="Facebook",
+        token=token,
     )
+    
     db.add(user)
     db.commit()
     db.refresh(user)
@@ -155,7 +183,8 @@ def get_admin_users(db: Session):
             "spent": total_spent,
             "lastOrder": last_order,
             "status": 1 if user.user_status else 0,
-            "avatar": user.photo
+            "avatar": user.photo,
+            "signed_at": user.signed_at,
         })
 
     return data
@@ -169,3 +198,11 @@ def set_user_status(db: Session, user_id: int, status: int):
     db.commit()
     db.refresh(user)
     return user
+
+def get_customer_join_for_month(db: Session, year: int, month: int) -> int:
+    
+    count = db.query(func.count(User.user_id))\
+              .filter(extract("month", OrderTable.order_date) == month)\
+              .filter(extract("year", OrderTable.order_date) == year)\
+              .scalar()
+    return count or 0

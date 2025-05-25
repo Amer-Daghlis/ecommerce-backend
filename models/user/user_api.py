@@ -10,6 +10,8 @@ from fastapi import Request
 from pydantic import BaseModel
 from datetime import datetime, timedelta 
 from .user_db import VerificationCode
+import os
+from ..cart.cart_db import get_or_create_cart
 
 
 router = APIRouter(prefix="/users", tags=["Users"])
@@ -32,26 +34,34 @@ def check_email(data: user_schema.CheckUserEmailDefine, db: Session = Depends(ge
 #  POST: Verify email (send verification code)✅
 @router.post("/verify-email")
 def send_verification_code(data: user_schema.UserVerify, db: Session = Depends(get_db)):
+    from datetime import datetime, timedelta
+
     code = generate_verification_code()
     expires_at = datetime.utcnow() + timedelta(minutes=1)
 
-    # Check if the email already exists in the database
-    existing = db.query(VerificationCode).filter_by(email=data.user_email).first()
-    if existing:
-        # Update the existing record
-        existing.code = code
-        existing.expires_at = expires_at
-    else:
-        # Create a new record
-        new_entry = VerificationCode(email=data.user_email, code=code, expires_at=expires_at)
-        db.add(new_entry)
-
     try:
+        existing = db.query(VerificationCode).filter_by(email=data.user_email).first()
+        if existing:
+            existing.code = code
+            existing.expires_at = expires_at
+        else:
+            new_entry = VerificationCode(
+                email=data.user_email,
+                code=code,
+                expires_at=expires_at
+            )
+            db.add(new_entry)
+
         db.commit()
+
+        # Comment out this temporarily if debugging
         send_verification_email(data.user_email, code)
+
         return {"message": "Verification code sent"}
+
     except Exception as e:
-        db.rollback()  # Rollback the transaction in case of an error
+        db.rollback()
+        print(f"Error: {e}")
         raise HTTPException(status_code=500, detail=f"Failed to send verification code: {e}")
 
 @router.post("/checkCode")
@@ -82,8 +92,8 @@ def signup_user(user: user_schema.UserCreate, db: Session = Depends(get_db)):
 def signin_user(data: user_schema.UserCreate, db: Session = Depends(get_db)):
     db_user = user_db.get_user_by_email(db, data.user_email)
     if not db_user or not verify_password(data.user_password, db_user.user_password):
-        raise HTTPException(status_code=401, detail="Invalid email or password")
-    return {"IsUserDefined": True, "user_id": db_user.user_id}
+        return {"IsUserDefined": False, "user_id": -1}
+    return {"IsUserDefined": True, "user_id": db_user.user_id, "user_status": db_user.user_status}
 
 #  GET: Get user by ID✅
 @router.get("/{user_id}", response_model=user_schema.UserOut)
@@ -106,45 +116,51 @@ def get_all_users(db: Session = Depends(get_db)):
 
 @router.post("/facebook-login")
 async def facebook_login(request: Request, db: Session = Depends(get_db)):
+    # FACEBOOK_APP_ID=717835217478182
+    # FACEBOOK_APP_SECRET="4b5c1c638f0dcd8eaf898caea9bf2f0b"
+
+
     data = await request.json()
-    access_token = data.get("accessToken")  # Token from frontend
+    access_token = data.get("accessToken")
 
     if not access_token:
         raise HTTPException(status_code=400, detail="No access token received")
 
-    print("Received access token:", access_token)
+    app_id = os.getenv("FACEBOOK_APP_ID")
+    app_secret = os.getenv("FACEBOOK_APP_SECRET")
 
     try:
-        # Verify the Facebook token
-        app_id = ""  # Replace with your Facebook app ID
-        app_secret = ""  # Replace with your Facebook app secret
-        url = f"https://graph.facebook.com/me?access_token={access_token}&fields=id,name,email"
-        
-        # Make a request to Facebook Graph API
-        response = requests.get(url)
-        fb_data = response.json()
-        print("Facebook API response:", fb_data)
+        # Validate token (optional but good)
+        debug_url = f"https://graph.facebook.com/debug_token?input_token={access_token}&access_token={app_id}|{app_secret}"
+        debug_resp = requests.get(debug_url).json()
+        if "error" in debug_resp.get("data", {}):
+            raise HTTPException(status_code=400, detail="Invalid Facebook token")
 
-        if "error" in fb_data:
+        # Fetch user info
+        info_url = f"https://graph.facebook.com/me?access_token={access_token}&fields=id,name,email"
+        info_resp = requests.get(info_url).json()
+
+        if "error" in info_resp:
             raise HTTPException(status_code=400, detail="Facebook login failed")
 
-        # Extract user info from Facebook response
-        email = fb_data.get("email")
-        name = fb_data.get("name")
+        email = info_resp.get("email")
+        name = info_resp.get("name")
 
-        # Handle user login/signup from Facebook
-        user = user_db.get_or_create_facebook_user(db, email, name)
-        
-        return {"message": "Login successful", "user_id": user.user_id, "email": user.user_email}
+        if not email:
+            raise HTTPException(status_code=400, detail="Email not provided by Facebook")
+
+        user = user_db.get_or_create_facebook_user(db, email, name, access_token)
+        return {"message": "Login successful", "user_id": user.user_id}
 
     except Exception as e:
         print("Error during Facebook login:", str(e))
         raise HTTPException(status_code=400, detail=f"Facebook login failed: {str(e)}")
 
+
 @router.post("/google-login")
 async def google_login(request: Request, db: Session = Depends(get_db)):
     data = await request.json()
-    print("Received JSON from frontend:", data)  # ✅ Add this
+    print("Received JSON from frontend:", data)
 
     token = data.get("token")  # ✅ Make sure this matches frontend key
 
@@ -152,13 +168,14 @@ async def google_login(request: Request, db: Session = Depends(get_db)):
         raise HTTPException(status_code=400, detail="No token received")
 
     try:
-        idinfo = id_token.verify_oauth2_token(token, google_requests.Request())
+        # client_id = "631245239192-8cek364mrcs3477aet7poiv7tj0kn39c.apps.googleusercontent.com"
+        idinfo = id_token.verify_oauth2_token(token, google_requests.Request(), client_id)
         email = idinfo["email"]
         name = idinfo.get("name", "")
 
-        user = user_db.get_or_create_google_user(db, email, name)
+        user = user_db.get_or_create_google_user(db, email, name, token)
 
-        return {"message": "Login successful", "user_id": user.user_id, "email": user.user_email}
+        return {"message": "Login successful", "user_id": user.user_id}
 
     except Exception as e:
         raise HTTPException(status_code=400, detail=f"Google token verification failed: {str(e)}")
@@ -219,3 +236,28 @@ def post_set_user_status(user_id: int, data: UserStatusUpdate, db: Session = Dep
         "message": f"User {user_id} status updated",
         "status": 1 if user.user_status else 0
     }
+
+@router.get("/total-users/month", response_model=list[user_schema.MonthlyUserJoin])
+def get_monthly_and_previous_revenue(db: Session = Depends(get_db)):
+    from datetime import datetime
+    now = datetime.now()
+
+    # Current month
+    current_month = now.month
+    current_year = now.year
+
+    # Previous month logic
+    if now.month == 1:
+        previous_month = 12
+        previous_year = now.year - 1
+    else:
+        previous_month = now.month - 1
+        previous_year = now.year
+
+    current_revenue = user_db.get_customer_join_for_month(db, current_year, current_month)
+    previous_revenue = user_db.get_customer_join_for_month(db, previous_year, previous_month)
+
+    return  [
+    {"month": current_month, "year": current_year, "total_users": current_revenue},
+    {"month": previous_month, "year": previous_year, "total_users": previous_revenue}
+]

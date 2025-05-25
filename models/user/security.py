@@ -20,14 +20,14 @@ def generate_verification_code() -> str:
 def send_verification_email(email: str, code: str):
     # Email details
     subject = "Verification Code for Safe Web"
-    sender_email = ""
+    sender_email = "alifaqi68@gmail.com"
     receiver_email = email
 
     # SMTP credentials (login sender)
     smtp_server = "smtp.gmail.com"
-    smtp_port = 587
-    smtp_username = ""
-    smtp_password = ""
+    # smtp_port = 587
+    # smtp_username = "alifaqi68@gmail.com"
+    # smtp_password = "ulxx npip xqfv hmtd"
     # alifaqi68@gmail.com
     # ulxx npip xqfv hmtd
 

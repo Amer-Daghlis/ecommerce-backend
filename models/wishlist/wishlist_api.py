@@ -17,7 +17,7 @@ def get_db():
 def add_to_wishlist(data: wishlist_schema.AddToWishlistRequest, db: Session = Depends(get_db)):
     success, error = wishlist_db.add_to_wishlist(db, data.user_id, data.product_id)
     if not success:
-        raise HTTPException(status_code=400, detail=error)
+        return {"message": error}
     return {"message": "Product added to wishlist successfully"}
 #  GET wishlist for user ✅
 @router.get("/{user_id}", response_model=list[wishlist_schema.WishlistItemOut])
