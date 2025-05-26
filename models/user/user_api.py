@@ -117,8 +117,8 @@ def get_all_users(db: Session = Depends(get_db)):
 
 @router.post("/facebook-login")
 async def facebook_login(request: Request, db: Session = Depends(get_db)):
-    # FACEBOOK_APP_ID=717835217478182
-    # FACEBOOK_APP_SECRET="4b5c1c638f0dcd8eaf898caea9bf2f0b"
+    FACEBOOK_APP_ID=717835217478182
+    FACEBOOK_APP_SECRET="4b5c1c638f0dcd8eaf898caea9bf2f0b"
 
 
     data = await request.json()
@@ -169,7 +169,7 @@ async def google_login(request: Request, db: Session = Depends(get_db)):
         raise HTTPException(status_code=400, detail="No token received")
 
     try:
-        # client_id = "631245239192-8cek364mrcs3477aet7poiv7tj0kn39c.apps.googleusercontent.com"
+        client_id = "631245239192-8cek364mrcs3477aet7poiv7tj0kn39c.apps.googleusercontent.com"
         idinfo = id_token.verify_oauth2_token(token, google_requests.Request(), client_id)
         email = idinfo["email"]
         name = idinfo.get("name", "")

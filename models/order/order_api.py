@@ -202,6 +202,24 @@ def get_all_customers_orders(db: Session = Depends(get_db)):
         raise HTTPException(status_code=404, detail="No orders found.")
     return orders
 
+@router.get("/sales-analytics", response_model=order_schema.SalesAnalytics)
+def get_sales_analytics(db: Session = Depends(get_db)):
+    revenue_data = order_db.total_revenue_all_products(db)
+    avg_order_value_data = order_db.avg_order_value(db)
+    total_orders_data = order_db.total_orders(db)
+    conversion_rate_data = order_db.conversion_rate(db)
+
+    return order_schema.SalesAnalytics(
+        current_month_revenue=revenue_data["current_month_revenue"],
+        previous_month_revenue=revenue_data["previous_month_revenue"],
+        current_month_avg_order_value=avg_order_value_data["current_month_avg"],
+        previous_month_avg_order_value=avg_order_value_data["previous_month_avg"],
+        current_month_orders=total_orders_data["current_month_orders"],
+        previous_month_orders=total_orders_data["previous_month_orders"],
+        current_month_conversion_rate=conversion_rate_data["current_month_conversion_rate"],
+        previous_month_conversion_rate=conversion_rate_data["previous_month_conversion_rate"]
+    )
+
 @router.get("/customer-orders/{user_id}", response_model=list[order_schema.CustomerOrderOut])
 def get_orders_for_customer_endpoint(user_id: int, db: Session = Depends(get_db)):
     orders = order_db.get_orders_for_customer(db, user_id)

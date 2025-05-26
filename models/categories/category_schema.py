@@ -83,3 +83,18 @@ class CategoryWithTools(BaseModel):
 
     class Config:
         orm_mode = True
+
+class CategoryPerformance(BaseModel):
+    category_name: str
+    number_of_products: int
+    total_sales: float
+    total_profit: float
+
+
+class TopPerformanceCategories(BaseModel):
+    monthly: List[CategoryPerformance]
+    three_months: List[CategoryPerformance]
+    yearly: List[CategoryPerformance]
+
+    class Config:
+        orm_mode = True

@@ -157,3 +157,16 @@ class ProductDetailsInOrder(BaseModel):
 
     class Config:
         orm_mode = True
+
+class SalesAnalytics(BaseModel):
+    current_month_revenue: float
+    previous_month_revenue: float
+    current_month_avg_order_value: float
+    previous_month_avg_order_value: float
+    current_month_orders: int
+    previous_month_orders: int
+    current_month_conversion_rate: float
+    previous_month_conversion_rate: float
+
+    class Config:
+        from_attributes = True

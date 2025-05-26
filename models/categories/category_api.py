@@ -31,3 +31,41 @@ def get_categories_with_products(db: Session = Depends(get_db)):
 @router.get("/with-tools", response_model=list[category_schema.CategoryWithTools])
 def get_categories_with_tools(db: Session = Depends(get_db)):
     return category_db.get_categories_with_tools_only(db)
+
+@router.get("/top-performance-categories", response_model=category_schema.TopPerformanceCategories)
+def get_top_performance_categories(db: Session = Depends(get_db)):
+    # Get top-performing categories for monthly, 3-month, and yearly periods
+    monthly_data = category_db.get_top5_performance_categories_monthly(db)
+    three_months_data = category_db.get_top5_performance_categories_3month(db)
+    yearly_data = category_db.get_top5_performance_categories_yearly(db)
+
+    # Return the combined data
+    return category_schema.TopPerformanceCategories(
+        monthly=[
+            category_schema.CategoryPerformance(
+                category_name=item["category_name"],
+                number_of_products=item["number_of_products"],
+                total_sales=item["total_sales"],
+                total_profit=item["total_profit"]
+            )
+            for item in monthly_data
+        ],
+        three_months=[
+            category_schema.CategoryPerformance(
+                category_name=item["category_name"],
+                number_of_products=item["number_of_products"],
+                total_sales=item["total_sales"],
+                total_profit=item["total_profit"]
+            )
+            for item in three_months_data
+        ],
+        yearly=[
+            category_schema.CategoryPerformance(
+                category_name=item["category_name"],
+                number_of_products=item["number_of_products"],
+                total_sales=item["total_sales"],
+                total_profit=item["total_profit"]
+            )
+            for item in yearly_data
+        ],
+    )

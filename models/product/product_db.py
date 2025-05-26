@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, Float, Boolean, DateTime, ForeignKey, Date, func
+from sqlalchemy import Column, Integer, String, Float, Boolean, DateTime, ForeignKey, Date, func, extract, tuple_
 from sqlalchemy.orm import relationship, Session
 from datetime import datetime
 from models.database import Base
@@ -165,3 +165,585 @@ def get_all_products_with_details(db: Session):
 
     return products
     
+
+def get_total_product_sales_monthly(db: Session):
+    from ..order.order_db import OrderProduct
+    from ..order.order_db import OrderTable
+    today = datetime.today()
+    current_year = today.year
+    current_month = today.month
+
+    if current_month == 1:
+        previous_month = 12
+        previous_year = current_year - 1
+    else:
+        previous_month = current_month - 1
+        previous_year = current_year
+
+    current_month_sales = db.query(func.sum(OrderProduct.quantity))\
+        .join(OrderTable, OrderProduct.order_id == OrderTable.order_id)\
+        .filter(extract("year", OrderTable.order_date) == current_year)\
+        .filter(extract("month", OrderTable.order_date) == current_month)\
+        .scalar()
+
+    previous_month_sales = db.query(func.sum(OrderProduct.quantity))\
+        .join(OrderTable, OrderProduct.order_id == OrderTable.order_id)\
+        .filter(extract("year", OrderTable.order_date) == previous_year)\
+        .filter(extract("month", OrderTable.order_date) == previous_month)\
+        .scalar()
+
+    return {
+        "current_month_sales": current_month_sales if current_month_sales else 0,
+        "previous_month_sales": previous_month_sales if previous_month_sales else 0
+    }
+
+def get_num_of_products_sold_monthly(db: Session):
+    from ..order.order_db import OrderProduct
+    from ..order.order_db import OrderTable
+
+    today = datetime.today()
+    current_year = today.year
+    current_month = today.month
+
+    if current_month == 1:
+        previous_month = 12
+        previous_year = current_year - 1
+    else:
+        previous_month = current_month - 1
+        previous_year = current_year
+
+    current_month_products_sold = db.query(func.sum(OrderProduct.quantity))\
+        .join(OrderTable, OrderProduct.order_id == OrderTable.order_id)\
+        .filter(extract("year", OrderTable.order_date) == current_year)\
+        .filter(extract("month", OrderTable.order_date) == current_month)\
+        .scalar()
+
+    previous_month_products_sold = db.query(func.sum(OrderProduct.quantity))\
+        .join(OrderTable, OrderProduct.order_id == OrderTable.order_id)\
+        .filter(extract("year", OrderTable.order_date) == previous_year)\
+        .filter(extract("month", OrderTable.order_date) == previous_month)\
+        .scalar()
+
+    return {
+        "current_month_products_sold": current_month_products_sold if current_month_products_sold else 0,
+        "previous_month_products_sold": previous_month_products_sold if previous_month_products_sold else 0
+    }
+
+def get_avg_price_of_products_monthly(db: Session):
+    from ..order.order_db import OrderProduct
+    from ..order.order_db import OrderTable
+
+    today = datetime.today()
+    current_year = today.year
+    current_month = today.month
+
+    if current_month == 1:
+        previous_month = 12
+        previous_year = current_year - 1
+    else:
+        previous_month = current_month - 1
+        previous_year = current_year
+
+    current_month_avg_price = db.query(func.avg(OrderProduct.quantity * Product.selling_price))\
+        .join(OrderTable, OrderProduct.order_id == OrderTable.order_id)\
+        .join(Product, OrderProduct.product_id == Product.product_id)\
+        .filter(extract("year", OrderTable.order_date) == current_year)\
+        .filter(extract("month", OrderTable.order_date) == current_month)\
+        .scalar()
+
+    previous_month_avg_price = db.query(func.avg(OrderProduct.quantity * Product.selling_price))\
+        .join(OrderTable, OrderProduct.order_id == OrderTable.order_id)\
+        .join(Product, OrderProduct.product_id == Product.product_id)\
+        .filter(extract("year", OrderTable.order_date) == previous_year)\
+        .filter(extract("month", OrderTable.order_date) == previous_month)\
+        .scalar()
+
+    return {
+        "current_month_avg_price": current_month_avg_price if current_month_avg_price else 0,
+        "previous_month_avg_price": previous_month_avg_price if previous_month_avg_price else 0
+    }
+
+def get_profit_margin_of_products_monthly(db: Session):
+    from ..order.order_db import OrderProduct
+    from ..order.order_db import OrderTable
+
+    today = datetime.today()
+    current_year = today.year
+    current_month = today.month
+
+    if current_month == 1:
+        previous_month = 12
+        previous_year = current_year - 1
+    else:
+        previous_month = current_month - 1
+        previous_year = current_year
+
+    current_month_profit_margin = db.query(func.sum((OrderProduct.quantity * (Product.selling_price - Product.original_price))))\
+        .join(OrderTable, OrderProduct.order_id == OrderTable.order_id)\
+        .join(Product, OrderProduct.product_id == Product.product_id)\
+        .filter(extract("year", OrderTable.order_date) == current_year)\
+        .filter(extract("month", OrderTable.order_date) == current_month)\
+        .scalar()
+
+    previous_month_profit_margin = db.query(func.sum((OrderProduct.quantity * (Product.selling_price - Product.original_price))))\
+        .join(OrderTable, OrderProduct.order_id == OrderTable.order_id)\
+        .join(Product, OrderProduct.product_id == Product.product_id)\
+        .filter(extract("year", OrderTable.order_date) == previous_year)\
+        .filter(extract("month", OrderTable.order_date) == previous_month)\
+        .scalar()
+
+    return {
+        "current_month_profit_margin": current_month_profit_margin if current_month_profit_margin else 0,
+        "previous_month_profit_margin": previous_month_profit_margin if previous_month_profit_margin else 0
+    }
+
+def get_total_product_sales_3month(db: Session):
+    from ..order.order_db import OrderProduct
+    from ..order.order_db import OrderTable
+    from sqlalchemy import extract
+    from datetime import datetime
+
+    today = datetime.today()
+    current_year = today.year
+    current_month = today.month
+
+    last_three_months = [(current_year, current_month - i) if current_month - i > 0 else (current_year - 1, 12 + (current_month - i)) for i in range(3)]
+
+    previous_three_months = [(current_year, current_month - i - 3) if current_month - i - 3 > 0 else (current_year - 1, 12 + (current_month - i - 3)) for i in range(3)]
+
+    # Query for the last three months
+    last_three_months_sales = db.query(func.sum(OrderProduct.quantity))\
+        .join(OrderTable, OrderProduct.order_id == OrderTable.order_id)\
+        .filter(
+            tuple_(
+                extract("year", OrderTable.order_date),
+                extract("month", OrderTable.order_date)
+            ).in_(last_three_months)
+        )\
+        .scalar()
+
+    previous_three_months_sales = db.query(func.sum(OrderProduct.quantity))\
+        .join(OrderTable, OrderProduct.order_id == OrderTable.order_id)\
+        .filter(
+            tuple_(
+                extract("year", OrderTable.order_date),
+                extract("month", OrderTable.order_date)
+            ).in_(previous_three_months)
+        )\
+        .scalar()
+
+    return {
+        "last_three_months_sales": last_three_months_sales if last_three_months_sales else 0,
+        "previous_three_months_sales": previous_three_months_sales if previous_three_months_sales else 0
+    }
+    
+
+def get_num_of_products_sold_3month(db: Session):
+    from ..order.order_db import OrderProduct
+    from ..order.order_db import OrderTable
+    from sqlalchemy import extract
+    from datetime import datetime
+
+    today = datetime.today()
+    current_year = today.year
+    current_month = today.month
+
+    last_three_months = [(current_year, current_month - i) if current_month - i > 0 else (current_year - 1, 12 + (current_month - i)) for i in range(3)]
+
+    previous_three_months = [(current_year, current_month - i - 3) if current_month - i - 3 > 0 else (current_year - 1, 12 + (current_month - i - 3)) for i in range(3)]
+
+    # Query for the last three months
+    last_three_months_products_sold = db.query(func.sum(OrderProduct.quantity))\
+        .join(OrderTable, OrderProduct.order_id == OrderTable.order_id)\
+        .filter(
+            tuple_(
+                extract("year", OrderTable.order_date),
+                extract("month", OrderTable.order_date)
+            ).in_(last_three_months)
+        )\
+        .scalar()
+
+    previous_three_months_products_sold = db.query(func.sum(OrderProduct.quantity))\
+        .join(OrderTable, OrderProduct.order_id == OrderTable.order_id)\
+        .filter(
+            tuple_(
+                extract("year", OrderTable.order_date),
+                extract("month", OrderTable.order_date)
+            ).in_(previous_three_months)
+        )\
+        .scalar()
+
+    return {
+        "last_three_months_products_sold": last_three_months_products_sold if last_three_months_products_sold else 0,
+        "previous_three_months_products_sold": previous_three_months_products_sold if previous_three_months_products_sold else 0
+    }
+
+def get_avg_price_of_products_3month(db: Session):
+    from ..order.order_db import OrderProduct
+    from ..order.order_db import OrderTable
+    from sqlalchemy import extract
+    from datetime import datetime
+
+    today = datetime.today()
+    current_year = today.year
+    current_month = today.month
+
+    last_three_months = [(current_year, current_month - i) if current_month - i > 0 else (current_year - 1, 12 + (current_month - i)) for i in range(3)]
+
+    previous_three_months = [(current_year, current_month - i - 3) if current_month - i - 3 > 0 else (current_year - 1, 12 + (current_month - i - 3)) for i in range(3)]
+
+    # Query for the last three months
+    last_three_months_avg_price = db.query(func.avg(OrderProduct.quantity * Product.selling_price))\
+        .join(OrderTable, OrderProduct.order_id == OrderTable.order_id)\
+        .join(Product, OrderProduct.product_id == Product.product_id)\
+        .filter(
+            tuple_(
+                extract("year", OrderTable.order_date),
+                extract("month", OrderTable.order_date)
+            ).in_(last_three_months)
+        )\
+        .scalar()
+
+    previous_three_months_avg_price = db.query(func.avg(OrderProduct.quantity * Product.selling_price))\
+        .join(OrderTable, OrderProduct.order_id == OrderTable.order_id)\
+        .join(Product, OrderProduct.product_id == Product.product_id)\
+        .filter(
+            tuple_(
+                extract("year", OrderTable.order_date),
+                extract("month", OrderTable.order_date)
+            ).in_(previous_three_months)
+        )\
+        .scalar()
+
+    return {
+        "last_three_months_avg_price": last_three_months_avg_price if last_three_months_avg_price else 0,
+        "previous_three_months_avg_price": previous_three_months_avg_price if previous_three_months_avg_price else 0
+    }
+
+
+def get_profit_margin_of_products_3month(db: Session):
+    from ..order.order_db import OrderProduct
+    from ..order.order_db import OrderTable
+    from sqlalchemy import extract
+    from datetime import datetime
+
+    today = datetime.today()
+    current_year = today.year
+    current_month = today.month
+
+    last_three_months = [(current_year, current_month - i) if current_month - i > 0 else (current_year - 1, 12 + (current_month - i)) for i in range(3)]
+
+    previous_three_months = [(current_year, current_month - i - 3) if current_month - i - 3 > 0 else (current_year - 1, 12 + (current_month - i - 3)) for i in range(3)]
+
+    # Query for the last three months
+    last_three_months_profit_margin = db.query(func.sum((OrderProduct.quantity * (Product.selling_price - Product.original_price))))\
+        .join(OrderTable, OrderProduct.order_id == OrderTable.order_id)\
+        .join(Product, OrderProduct.product_id == Product.product_id)\
+        .filter(
+            tuple_(
+                extract("year", OrderTable.order_date),
+                extract("month", OrderTable.order_date)
+            ).in_(last_three_months)
+        )\
+        .scalar()
+
+    previous_three_months_profit_margin = db.query(func.sum((OrderProduct.quantity * (Product.selling_price - Product.original_price))))\
+        .join(OrderTable, OrderProduct.order_id == OrderTable.order_id)\
+        .join(Product, OrderProduct.product_id == Product.product_id)\
+        .filter(
+            tuple_(
+                extract("year", OrderTable.order_date),
+                extract("month", OrderTable.order_date)
+            ).in_(previous_three_months)
+        )\
+        .scalar()
+
+    return {
+        "last_three_months_profit_margin": last_three_months_profit_margin if last_three_months_profit_margin else 0,
+        "previous_three_months_profit_margin": previous_three_months_profit_margin if previous_three_months_profit_margin else 0
+    }
+
+def get_total_product_sales_yearly(db: Session):
+    from ..order.order_db import OrderProduct
+    from ..order.order_db import OrderTable
+    today = datetime.today()
+    current_year = today.year
+
+    current_year_sales = db.query(func.sum(OrderProduct.quantity))\
+        .join(OrderTable, OrderProduct.order_id == OrderTable.order_id)\
+        .filter(extract("year", OrderTable.order_date) == current_year)\
+        .scalar()
+
+    previous_year_sales = db.query(func.sum(OrderProduct.quantity))\
+        .join(OrderTable, OrderProduct.order_id == OrderTable.order_id)\
+        .filter(extract("year", OrderTable.order_date) == current_year - 1)\
+        .scalar()
+
+    return {
+        "current_year_sales": current_year_sales if current_year_sales else 0,
+        "previous_year_sales": previous_year_sales if previous_year_sales else 0
+    }
+
+def get_num_of_products_sold_yearly(db: Session):
+    from ..order.order_db import OrderProduct
+    from ..order.order_db import OrderTable
+    today = datetime.today()
+    current_year = today.year
+
+    current_year_products_sold = db.query(func.sum(OrderProduct.quantity))\
+        .join(OrderTable, OrderProduct.order_id == OrderTable.order_id)\
+        .filter(extract("year", OrderTable.order_date) == current_year)\
+        .scalar()
+
+    previous_year_products_sold = db.query(func.sum(OrderProduct.quantity))\
+        .join(OrderTable, OrderProduct.order_id == OrderTable.order_id)\
+        .filter(extract("year", OrderTable.order_date) == current_year - 1)\
+        .scalar()
+
+    return {
+        "current_year_products_sold": current_year_products_sold if current_year_products_sold else 0,
+        "previous_year_products_sold": previous_year_products_sold if previous_year_products_sold else 0
+    }
+
+def get_avg_price_of_products_yearly(db: Session):
+    from ..order.order_db import OrderProduct
+    from ..order.order_db import OrderTable
+    today = datetime.today()
+    current_year = today.year
+
+    current_year_avg_price = db.query(func.avg(OrderProduct.quantity * Product.selling_price))\
+        .join(OrderTable, OrderProduct.order_id == OrderTable.order_id)\
+        .join(Product, OrderProduct.product_id == Product.product_id)\
+        .filter(extract("year", OrderTable.order_date) == current_year)\
+        .scalar()
+
+    previous_year_avg_price = db.query(func.avg(OrderProduct.quantity * Product.selling_price))\
+        .join(OrderTable, OrderProduct.order_id == OrderTable.order_id)\
+        .join(Product, OrderProduct.product_id == Product.product_id)\
+        .filter(extract("year", OrderTable.order_date) == current_year - 1)\
+        .scalar()
+
+    return {
+        "current_year_avg_price": current_year_avg_price if current_year_avg_price else 0,
+        "previous_year_avg_price": previous_year_avg_price if previous_year_avg_price else 0
+    }
+def get_profit_margin_of_products_yearly(db: Session):
+    from ..order.order_db import OrderProduct
+    from ..order.order_db import OrderTable
+    today = datetime.today()
+    current_year = today.year
+
+    current_year_profit_margin = db.query(func.sum((OrderProduct.quantity * (Product.selling_price - Product.original_price))))\
+        .join(OrderTable, OrderProduct.order_id == OrderTable.order_id)\
+        .join(Product, OrderProduct.product_id == Product.product_id)\
+        .filter(extract("year", OrderTable.order_date) == current_year)\
+        .scalar()
+
+    previous_year_profit_margin = db.query(func.sum((OrderProduct.quantity * (Product.selling_price - Product.original_price))))\
+        .join(OrderTable, OrderProduct.order_id == OrderTable.order_id)\
+        .join(Product, OrderProduct.product_id == Product.product_id)\
+        .filter(extract("year", OrderTable.order_date) == current_year - 1)\
+        .scalar()
+
+    return {
+        "current_year_profit_margin": current_year_profit_margin if current_year_profit_margin else 0,
+        "previous_year_profit_margin": previous_year_profit_margin if previous_year_profit_margin else 0
+    }
+
+
+def get_top_performing_products_monthly(db: Session):
+    from ..order.order_db import OrderProduct
+    from ..order.order_db import OrderTable
+
+    # Get the current date
+    today = datetime.today()
+    current_year = today.year
+    current_month = today.month
+
+    # Calculate the previous month and year
+    if current_month == 1:
+        previous_month = 12
+        previous_year = current_year - 1
+    else:
+        previous_month = current_month - 1
+        previous_year = current_year
+
+    # Query for current month's product sales
+    current_month_data = db.query(
+        Product.product_name,
+        func.sum(OrderProduct.quantity).label("units_sold"),
+        func.sum(OrderProduct.quantity * Product.selling_price).label("sales")
+    ).join(
+        OrderTable, OrderProduct.order_id == OrderTable.order_id
+    ).join(
+        Product, OrderProduct.product_id == Product.product_id
+    ).filter(
+        extract("year", OrderTable.order_date) == current_year,
+        extract("month", OrderTable.order_date) == current_month
+    ).group_by(
+        Product.product_id
+    ).all()
+
+    # Query for previous month's product sales
+    previous_month_data = db.query(
+        Product.product_name,
+        func.sum(OrderProduct.quantity).label("units_sold"),
+        func.sum(OrderProduct.quantity * Product.selling_price).label("sales")
+    ).join(
+        OrderTable, OrderProduct.order_id == OrderTable.order_id
+    ).join(
+        Product, OrderProduct.product_id == Product.product_id
+    ).filter(
+        extract("year", OrderTable.order_date) == previous_year,
+        extract("month", OrderTable.order_date) == previous_month
+    ).group_by(
+        Product.product_id
+    ).all()
+
+    # Convert query results to dictionaries for easier comparison
+    current_month_dict = {row.product_name: {"units_sold": row.units_sold, "sales": row.sales} for row in current_month_data}
+    previous_month_dict = {row.product_name: {"units_sold": row.units_sold, "sales": row.sales} for row in previous_month_data}
+
+    # Calculate growth percentage and prepare the result
+    performance_data = []
+    for product_name, current_data in current_month_dict.items():
+        previous_data = previous_month_dict.get(product_name, {"units_sold": 0, "sales": 0})
+        units_sold_growth = ((current_data["units_sold"] - previous_data["units_sold"]) / previous_data["units_sold"] * 100) if previous_data["units_sold"] > 0 else 100
+
+        performance_data.append({
+            "product_name": product_name,
+            "current_month_sales": current_data["sales"],
+            "current_month_units_sold": current_data["units_sold"],
+            "units_sold_growth_percentage": units_sold_growth
+        })
+
+    return performance_data
+
+def get_top_performing_products_3month(db: Session):
+    from ..order.order_db import OrderProduct
+    from ..order.order_db import OrderTable
+
+    # Get the current date
+    today = datetime.today()
+    current_year = today.year
+    current_month = today.month
+
+    # Calculate the last three months
+    last_three_months = [(current_year, current_month - i) if current_month - i > 0 else (current_year - 1, 12 + (current_month - i)) for i in range(3)]
+
+    # Calculate the previous three months
+    previous_three_months = [(current_year, current_month - i - 3) if current_month - i - 3 > 0 else (current_year - 1, 12 + (current_month - i - 3)) for i in range(3)]
+
+    # Query for the last three months' product sales
+    last_three_months_data = db.query(
+        Product.product_name,
+        func.sum(OrderProduct.quantity).label("units_sold"),
+        func.sum(OrderProduct.quantity * Product.selling_price).label("sales")
+    ).join(
+        OrderTable, OrderProduct.order_id == OrderTable.order_id
+    ).join(
+        Product, OrderProduct.product_id == Product.product_id
+    ).filter(
+        tuple_(
+            extract("year", OrderTable.order_date),
+            extract("month", OrderTable.order_date)
+        ).in_(last_three_months)
+    ).group_by(
+        Product.product_id
+    ).all()
+
+    # Query for the previous three months' product sales
+    previous_three_months_data = db.query(
+        Product.product_name,
+        func.sum(OrderProduct.quantity).label("units_sold"),
+        func.sum(OrderProduct.quantity * Product.selling_price).label("sales")
+    ).join(
+        OrderTable, OrderProduct.order_id == OrderTable.order_id
+    ).join(
+        Product, OrderProduct.product_id == Product.product_id
+    ).filter(
+        tuple_(
+            extract("year", OrderTable.order_date),
+            extract("month", OrderTable.order_date)
+        ).in_(previous_three_months)
+    ).group_by(
+        Product.product_id
+    ).all()
+
+    # Convert query results to dictionaries for easier comparison
+    last_three_months_dict = {row.product_name: {"units_sold": row.units_sold, "sales": row.sales} for row in last_three_months_data}
+    previous_three_months_dict = {row.product_name: {"units_sold": row.units_sold, "sales": row.sales} for row in previous_three_months_data}
+
+    # Calculate growth percentage and prepare the result
+    performance_data = []
+    for product_name, current_data in last_three_months_dict.items():
+        previous_data = previous_three_months_dict.get(product_name, {"units_sold": 0, "sales": 0})
+        units_sold_growth = ((current_data["units_sold"] - previous_data["units_sold"]) / previous_data["units_sold"] * 100) if previous_data["units_sold"] > 0 else 100
+
+        performance_data.append({
+            "product_name": product_name,
+            "last_three_months_sales": current_data["sales"],
+            "last_three_months_units_sold": current_data["units_sold"],
+            "units_sold_growth_percentage": units_sold_growth
+        })
+
+    return performance_data
+
+def get_top_performing_products_yearly(db: Session):
+    from ..order.order_db import OrderProduct
+    from ..order.order_db import OrderTable
+    from sqlalchemy import extract
+    from datetime import datetime
+
+    # Get the current date
+    today = datetime.today()
+    current_year = today.year
+
+    # Query for the current year's product sales
+    current_year_data = db.query(
+        Product.product_name,
+        func.sum(OrderProduct.quantity).label("units_sold"),
+        func.sum(OrderProduct.quantity * Product.selling_price).label("sales")
+    ).join(
+        OrderTable, OrderProduct.order_id == OrderTable.order_id
+    ).join(
+        Product, OrderProduct.product_id == Product.product_id
+    ).filter(
+        extract("year", OrderTable.order_date) == current_year
+    ).group_by(
+        Product.product_id
+    ).all()
+
+    # Query for the previous year's product sales
+    previous_year_data = db.query(
+        Product.product_name,
+        func.sum(OrderProduct.quantity).label("units_sold"),
+        func.sum(OrderProduct.quantity * Product.selling_price).label("sales")
+    ).join(
+        OrderTable, OrderProduct.order_id == OrderTable.order_id
+    ).join(
+        Product, OrderProduct.product_id == Product.product_id
+    ).filter(
+        extract("year", OrderTable.order_date) == current_year - 1
+    ).group_by(
+        Product.product_id
+    ).all()
+
+    # Convert query results to dictionaries for easier comparison
+    current_year_dict = {row.product_name: {"units_sold": row.units_sold, "sales": row.sales} for row in current_year_data}
+    previous_year_dict = {row.product_name: {"units_sold": row.units_sold, "sales": row.sales} for row in previous_year_data}
+
+    # Calculate growth percentage and prepare the result
+    performance_data = []
+    for product_name, current_data in current_year_dict.items():
+        previous_data = previous_year_dict.get(product_name, {"units_sold": 0, "sales": 0})
+        units_sold_growth = ((current_data["units_sold"] - previous_data["units_sold"]) / previous_data["units_sold"] * 100) if previous_data["units_sold"] > 0 else 100
+
+        performance_data.append({
+            "product_name": product_name,
+            "current_year_sales": current_data["sales"],
+            "current_year_units_sold": current_data["units_sold"],
+            "units_sold_growth_percentage": units_sold_growth
+        })
+
+    return performance_data

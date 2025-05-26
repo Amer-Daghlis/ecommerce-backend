@@ -266,3 +266,113 @@ def getAllProductsInOrder(db: Session, order_id: int):
         for product in result
     ]
     return products
+
+def total_revenue_all_products(db: Session):
+    today = datetime.today()
+    current_year = today.year
+    current_month = today.month
+
+    if current_month == 1:
+        previous_month = 12
+        previous_year = current_year - 1
+    else:
+        previous_month = current_month - 1
+        previous_year = current_year
+
+    current_month_revenue = db.query(func.sum(OrderTable.total_price))\
+        .filter(extract("year", OrderTable.order_date) == current_year)\
+        .filter(extract("month", OrderTable.order_date) == current_month)\
+        .scalar()
+
+    previous_month_revenue = db.query(func.sum(OrderTable.total_price))\
+        .filter(extract("year", OrderTable.order_date) == previous_year)\
+        .filter(extract("month", OrderTable.order_date) == previous_month)\
+        .scalar()
+
+    return {
+        "current_month_revenue": current_month_revenue if current_month_revenue else 0.0,
+        "previous_month_revenue": previous_month_revenue if previous_month_revenue else 0.0
+    }
+
+
+def avg_order_value(db: Session):
+    today = datetime.today()
+    current_year = today.year
+    current_month = today.month
+
+    if current_month == 1:
+        previous_month = 12
+        previous_year = current_year - 1
+    else:
+        previous_month = current_month - 1
+        previous_year = current_year
+
+    current_month_avg = db.query(func.avg(OrderTable.total_price))\
+        .filter(extract("year", OrderTable.order_date) == current_year)\
+        .filter(extract("month", OrderTable.order_date) == current_month)\
+        .scalar()
+
+    previous_month_avg = db.query(func.avg(OrderTable.total_price))\
+        .filter(extract("year", OrderTable.order_date) == previous_year)\
+        .filter(extract("month", OrderTable.order_date) == previous_month)\
+        .scalar()
+
+    return {
+        "current_month_avg": current_month_avg if current_month_avg else 0.0,
+        "previous_month_avg": previous_month_avg if previous_month_avg else 0.0
+    }
+
+def total_orders(db: Session):
+    today = datetime.today()
+    current_year = today.year
+    current_month = today.month
+
+    if current_month == 1:
+        previous_month = 12
+        previous_year = current_year - 1
+    else:
+        previous_month = current_month - 1
+        previous_year = current_year
+
+    current_month_orders = db.query(func.count(OrderTable.order_id))\
+        .filter(extract("year", OrderTable.order_date) == current_year)\
+        .filter(extract("month", OrderTable.order_date) == current_month)\
+        .scalar()
+
+    previous_month_orders = db.query(func.count(OrderTable.order_id))\
+        .filter(extract("year", OrderTable.order_date) == previous_year)\
+        .filter(extract("month", OrderTable.order_date) == previous_month)\
+        .scalar()
+
+    return {
+        "current_month_orders": current_month_orders if current_month_orders else 0,
+        "previous_month_orders": previous_month_orders if previous_month_orders else 0
+    }
+
+def conversion_rate(db: Session):
+    today = datetime.today()
+    current_year = today.year
+    current_month = today.month
+
+    if current_month == 1:
+        previous_month = 12
+        previous_year = current_year - 1
+    else:
+        previous_month = current_month - 1
+        previous_year = current_year
+
+    current_month_orders = db.query(func.count(OrderTable.order_id))\
+        .filter(extract("year", OrderTable.order_date) == current_year)\
+        .filter(extract("month", OrderTable.order_date) == current_month)\
+        .scalar()
+
+    previous_month_orders = db.query(func.count(OrderTable.order_id))\
+        .filter(extract("year", OrderTable.order_date) == previous_year)\
+        .filter(extract("month", OrderTable.order_date) == previous_month)\
+        .scalar()
+
+    return {
+        "current_month_conversion_rate": (current_month_orders / 100) if current_month_orders else 0.0,
+        "previous_month_conversion_rate": (previous_month_orders / 100) if previous_month_orders else 0.0
+    }
+

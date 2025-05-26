@@ -67,3 +67,50 @@ class ProductWithDetails(BaseModel):
 
     class Config:
         orm_mode = True
+class ProductAnalytics(BaseModel):
+    current_month_sales: float
+    previous_month_sales: float
+    current_month_products_sold: int
+    previous_month_products_sold: int
+    current_month_avg_price: float
+    previous_month_avg_price: float
+    current_month_profit_margin: float
+    previous_month_profit_margin: float
+
+    last_three_months_sales: float
+    previous_three_months_sales: float
+    last_three_months_products_sold: int
+    previous_three_months_products_sold: int
+    last_three_months_avg_price: float
+    previous_three_months_avg_price: float
+    last_three_months_profit_margin: float
+    previous_three_months_profit_margin: float
+
+    current_year_sales: float
+    previous_year_sales: float
+    current_year_products_sold: int
+    previous_year_products_sold: int
+    current_year_avg_price: float
+    previous_year_avg_price: float
+    current_year_profit_margin: float
+    previous_year_profit_margin: float
+
+    class Config:
+        from_attributes = True
+
+class ProductPerformance(BaseModel):
+    product_name: str
+    sales: float
+    units_sold: int
+    units_sold_growth_percentage: float
+    class Config:
+        from_attributes = True
+
+
+class TopPerformingProducts(BaseModel):
+    monthly: List[ProductPerformance]
+    three_months: List[ProductPerformance]
+    yearly: List[ProductPerformance]
+
+    class Config:
+        from_attributes = True
