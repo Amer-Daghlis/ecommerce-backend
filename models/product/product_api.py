@@ -136,6 +136,16 @@ def get_top_performing_products(db: Session = Depends(get_db)):
         ],
     )
 ######################################################################################################################333
+
+@router.get("/inventory-stats", response_model=product_schema.InventorySummary)
+def inventory_summary_endpoint(db: Session = Depends(get_db)):
+    return product_db.get_inventory_summary(db)
+
+@router.get("/simple-products", response_model=list[product_schema.SimpleProductOut])
+def get_all_simple_products(db: Session = Depends(get_db)):
+    products = product_db.get_simple_products(db)
+    return [product_schema.SimpleProductOut(**dict(row._mapping)) for row in products]
+
 #  Get product by ID (with photo URLs)
 @router.get("/{product_id}", response_model=product_schema.ProductOutWithDetails)
 def fetch_product_by_id(product_id: int, db: Session = Depends(get_db)):

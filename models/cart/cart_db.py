@@ -104,3 +104,9 @@ def set_cart_empty(db: Session, cart_id: int):
         cart.total_price = 0.0
 
     db.commit()
+
+def get_cart_products(db: Session, user_id: int):
+    cart = db.query(Cart).filter(Cart.user_id == user_id).first()
+    if not cart:
+        return []
+    return db.query(CartProduct).filter(CartProduct.cart_id == cart.cart_id).all()

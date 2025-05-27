@@ -114,3 +114,26 @@ class TopPerformingProducts(BaseModel):
 
     class Config:
         from_attributes = True
+
+# for inventory summary
+class InventorySummary(BaseModel):
+    current_month_product_count: int
+    previous_month_product_count: int
+    current_month_quantity: int
+    previous_month_quantity: int
+    low_stock_count: int
+    inventory_value: float
+
+    class Config:
+        from_attributes = True
+
+
+class SimpleProductOut(BaseModel):
+    product_id: int
+    product_name: str
+    original_price: float
+    selling_price: float
+    remaining_quantity: int
+
+    class Config:
+        from_attributes = True

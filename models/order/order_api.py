@@ -31,41 +31,61 @@ def get_all_orders_for_user(user_id: int, db: Session = Depends(get_db)):
         raise HTTPException(status_code=404, detail="No orders found for this user.")
     return orders
 
-
+     
 # ✅ POST: Insert Order
 @router.post("/insertDeliveryOrder")
 def insertOrder(order: order_schema.orderCreate, db: Session = Depends(get_db)):
     from datetime import date, timedelta
+    from models.cart.cart_db import get_cart_products, set_cart_empty
+    from models.product.product_db import decrease_product_quantity
+    from models.order.order_product_db import add_product_to_order
+    from models.order.TrackOrder_db import set_order_tracking
+    import uuid
 
-    # Prepare order data
-    order_data = order.dict()
-    order_data["order_status"] = "Order Placed"
-    order_data["order_date"] = date.today()
-    order_data["payment"] = False
-    order_data["payment_method"] = "Delivery"
-    order_data["estimated_delivery"] = date.today() + timedelta(days=3)
-
-    # Insert new order into the database
-    new_order = order_db.insert_onDelivery_order(db, order_data)
-
-    # Empty the cart after placing the order
     try:
-        set_cart_empty(db, order_data["user_id"])
+        order_data = order.dict()
+        order_data["order_status"] = "Order Placed"
+        order_data["order_date"] = date.today()
+        order_data["payment"] = False
+        order_data["payment_method"] = "Delivery"
+        order_data["estimated_delivery"] = date.today() + timedelta(days=3)
+        order_data["tracking_number"] = f"TRK-{uuid.uuid4().hex[:8].upper()}"
 
-        # Track the new order
+        new_order = order_db.insert_onDelivery_order(db, order_data)
+
+        # ✅ اجلب فقط CartProduct
+        products = get_cart_products(db, order_data["user_id"])
+        if not products:
+            raise HTTPException(status_code=400, detail="Cart is empty")
+
+        print("Products returned from get_cart_products:", products)
+        print("Type of first item:", type(products[0]) if products else "None")
+
+        for item in products:
+            print("DEBUG:", type(item), item.product_id, item.quantity)  # تأكيد
+            add_product_to_order(db, new_order.order_id, item.product_id, int(item.quantity))
+            decrease_product_quantity(db, item.product_id, int(item.quantity))
+
+        set_cart_empty(db, new_order.user_id)
+
         set_order_tracking(
-            db,
+            db=db,
             order_id=new_order.order_id,
             status="Order Placed",
             order_date=order_data["order_date"],
             location="Warehouse - Ramallah",
             description="Order has been placed and is being processed."
         )
+
+        return {"status": True, "order_id": new_order.order_id}
+
+    except ValueError as ve:
+        db.rollback()
+        raise HTTPException(status_code=400, detail=str(ve))
     except Exception as e:
         db.rollback()
-        raise HTTPException(status_code=500, detail=f"Failed to remove products from cart: {e}")
+        raise HTTPException(status_code=500, detail=f"Order failed: {e}")
 
-    return {"status": True, "order_id": new_order.order_id}
 
 
 # ✅ POST: Add products to an order

@@ -29,3 +29,5 @@ def add_product_to_order(db: Session, order_id: int, product_id: int, quantity: 
 
 def get_products_by_order(db: Session, order_id: int):
     return db.query(OrderProduct).filter(OrderProduct.order_id == order_id).all()
+
+

@@ -98,3 +98,5 @@ class TopPerformanceCategories(BaseModel):
 
     class Config:
         orm_mode = True
+
+

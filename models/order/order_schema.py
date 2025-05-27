@@ -27,13 +27,12 @@ class UserOrderCount(BaseModel):
 class orderCreate(BaseModel):
     user_id: int
     total_price: float
-    tracking_number: str
     going_location: str
     number_product: int
     receiver_name: str
 
     class Config:
-        from_attributes = True  # Updated for Pydantic v2
+        from_attributes = True
 
 class ProductInOrder(BaseModel):
     product_id: int

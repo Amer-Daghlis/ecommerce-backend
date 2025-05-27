@@ -11,6 +11,7 @@ from sqlalchemy.orm import Session
 from .order_schema import orderCreate
 from datetime import datetime, date, timedelta
 from sqlalchemy.orm import relationship
+from .TrackOrder_schema import TrackInSimple  
 
 class TrackTable(Base):
     __tablename__ = "traking_order"
@@ -35,3 +36,24 @@ def set_order_tracking(db: Session, order_id: int, status: str, order_date: date
     db.add(new_track)
     db.commit()
     db.refresh(new_track)
+
+def get_latest_tracking(db: Session, order_id: int):
+    return db.query(TrackTable)\
+             .filter(TrackTable.order_id == order_id)\
+             .order_by(TrackTable.order_date.desc())\
+             .first()
+
+
+def insert_tracking_entry(db: Session, data: TrackInSimple):
+    from datetime import date
+    new_track = TrackTable(
+        order_id=data.order_id,
+        order_status=data.order_status,
+        order_date=date.today(),
+        location=data.location,
+        description=data.description
+    )
+    db.add(new_track)
+    db.commit()
+    db.refresh(new_track)
+    return new_track
