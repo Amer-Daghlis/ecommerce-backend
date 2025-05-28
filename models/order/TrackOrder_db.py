@@ -57,3 +57,10 @@ def insert_tracking_entry(db: Session, data: TrackInSimple):
     db.commit()
     db.refresh(new_track)
     return new_track
+
+
+def get_tracking_history(db: Session, order_id: int):
+    return db.query(TrackTable)\
+             .filter(TrackTable.order_id == order_id)\
+             .order_by(TrackTable.order_date.asc())\
+             .all()

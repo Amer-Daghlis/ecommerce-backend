@@ -36,3 +36,13 @@ class TrackInSimple(BaseModel):
 
     class Config:
         from_attributes = True
+
+
+class TrackHistoryOut(BaseModel):
+    order_status: str
+    order_date: date
+    location: Optional[str]
+    description: Optional[str]
+
+    class Config:
+        from_attributes = True

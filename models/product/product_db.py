@@ -762,54 +762,25 @@ def get_top_performing_products_yearly(db: Session):
 
 
 def get_inventory_summary(db: Session):
-    from datetime import datetime
-    today = datetime.today()
-    current_month = today.month
-    current_year = today.year
+    # Total number of products
+    total_products = db.query(func.count(Product.product_id)).scalar()
 
-    if current_month == 1:
-        previous_month = 12
-        previous_year = current_year - 1
-    else:
-        previous_month = current_month - 1
-        previous_year = current_year
+    # In stock (quantity > 0)
+    in_stock = db.query(func.count(Product.product_id)).filter(Product.remaining_quantity > 0).scalar()
 
-    # عدد المنتجات المضافة كل شهر
-    current_month_count = db.query(func.count(Product.product_id)).filter(
-        extract("month", Product.added_at) == current_month,
-        extract("year", Product.added_at) == current_year
-    ).scalar()
-
-    previous_month_count = db.query(func.count(Product.product_id)).filter(
-        extract("month", Product.added_at) == previous_month,
-        extract("year", Product.added_at) == previous_year
-    ).scalar()
-
-    # كمية المنتجات
-    current_month_quantity = db.query(func.sum(Product.remaining_quantity)).filter(
-        extract("month", Product.added_at) == current_month,
-        extract("year", Product.added_at) == current_year
-    ).scalar()
-
-    previous_month_quantity = db.query(func.sum(Product.remaining_quantity)).filter(
-        extract("month", Product.added_at) == previous_month,
-        extract("year", Product.added_at) == previous_year
-    ).scalar()
-
-    # منتجات منخفضة المخزون
+    # Low stock (quantity < 10)
     low_stock_count = db.query(func.count(Product.product_id)).filter(Product.remaining_quantity < 10).scalar()
 
-    # القيمة الكلية للمخزون
+    # Inventory value = sum(remaining_quantity * selling_price)
     inventory_value = db.query(func.sum(Product.remaining_quantity * Product.selling_price)).scalar()
 
     return {
-        "current_month_product_count": current_month_count or 0,
-        "previous_month_product_count": previous_month_count or 0,
-        "current_month_quantity": current_month_quantity or 0,
-        "previous_month_quantity": previous_month_quantity or 0,
+        "total_products": total_products or 0,
+        "in_stock": in_stock or 0,
         "low_stock_count": low_stock_count or 0,
-        "inventory_value": inventory_value or 0
+        "inventory_value": inventory_value or 0.0
     }
+
 
 
 def get_all_simple_products(db: Session):

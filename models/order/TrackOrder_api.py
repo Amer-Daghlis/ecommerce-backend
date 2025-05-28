@@ -6,7 +6,10 @@ from models.order.order_db import get_order_by_order_id
 from models.order.TrackOrder_schema import TrackSummaryOut
 from models.order.TrackOrder_schema import TrackInSimple
 from models.order.TrackOrder_db import insert_tracking_entry
+from models.order.TrackOrder_db import get_tracking_history
+from models.order.TrackOrder_schema import TrackHistoryOut
 
+from typing import List
 
 router = APIRouter(prefix="/tracking", tags=["Tracking"])
 
@@ -44,3 +47,12 @@ def create_tracking_entry(track_data: TrackInSimple, db: Session = Depends(get_d
         return {"message": "Tracking entry added", "track_id": entry.track_id}
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed to insert tracking: {str(e)}")
+    
+
+
+@router.get("/history/{order_id}", response_model=List[TrackHistoryOut])
+def get_order_tracking_history(order_id: int, db: Session = Depends(get_db)):
+    history = get_tracking_history(db, order_id)
+    if not history:
+        raise HTTPException(status_code=404, detail="No tracking history found for this order.")
+    return history

@@ -117,10 +117,8 @@ class TopPerformingProducts(BaseModel):
 
 # for inventory summary
 class InventorySummary(BaseModel):
-    current_month_product_count: int
-    previous_month_product_count: int
-    current_month_quantity: int
-    previous_month_quantity: int
+    total_products: int
+    in_stock: int
     low_stock_count: int
     inventory_value: float
 
