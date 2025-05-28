@@ -7,6 +7,7 @@ from models.order.TrackOrder_schema import TrackSummaryOut
 from models.order.TrackOrder_schema import TrackInSimple
 from models.order.TrackOrder_db import insert_tracking_entry
 
+
 router = APIRouter(prefix="/tracking", tags=["Tracking"])
 
 def get_db():

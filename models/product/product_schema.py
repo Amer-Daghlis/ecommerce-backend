@@ -131,9 +131,12 @@ class InventorySummary(BaseModel):
 class SimpleProductOut(BaseModel):
     product_id: int
     product_name: str
-    original_price: float
-    selling_price: float
-    remaining_quantity: int
+    original_price: Optional[float]
+    selling_price: Optional[float]
+    total_quantity: Optional[int]
+    availability_status: Optional[bool]
+    category_name: str
+    attachments: List[str] = []
 
     class Config:
         from_attributes = True

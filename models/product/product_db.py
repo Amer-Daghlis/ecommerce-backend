@@ -2,7 +2,7 @@ from sqlalchemy import Column, Integer, String, Float, Boolean, DateTime, Foreig
 from sqlalchemy.orm import relationship, Session
 from datetime import datetime
 from models.database import Base
-from .product_schema import ProductCreate
+from .product_schema import ProductCreate, SimpleProductOut
 from .attachment_product_db import get_attachments_by_product_id
 from datetime import date
 
@@ -812,11 +812,29 @@ def get_inventory_summary(db: Session):
     }
 
 
-def get_simple_products(db: Session):
-    return db.query(
-        Product.product_id,
-        Product.product_name,
-        Product.original_price,
-        Product.selling_price,
-        Product.remaining_quantity
-    ).all()
+def simple_products(db: Session):
+    from ..categories.category_db import Category
+    from .attachment_product_db import get_attachments_by_product_id
+
+    products = db.query(Product).all()
+    output = []
+
+    for product in products:
+        category_name = db.query(Category.category_name).filter(Category.category_id == product.category_id).scalar()
+        attachments = get_attachments_by_product_id(db, product.product_id)
+
+
+        
+        output.append({
+            "product_id": product.product_id,
+            "product_name": product.product_name,
+            "original_price": product.original_price,
+            "selling_price": product.selling_price,
+            "total_quantity": product.total_quantity,
+            "availability_status": product.availability_status,
+            "category_name": category_name or "",
+            "attachments": attachments
+        })
+    #print the output of the function
+    print(output)
+    return output

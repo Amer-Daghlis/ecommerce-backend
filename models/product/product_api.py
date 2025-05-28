@@ -5,6 +5,7 @@ from . import product_db, product_schema
 from .attachment_product_db import get_attachments_by_product_id
 from .product_schema import ProductCount
 from datetime import date
+from typing import List
 
 router = APIRouter(prefix="/products", tags=["Products"])
 
@@ -14,6 +15,11 @@ def get_db():
         yield db
     finally:
         db.close()
+
+@router.get("/simple-products", response_model=List[product_schema.SimpleProductOut])
+def get_all_simple_products(db: Session = Depends(get_db)):
+    return product_db.simple_products(db)
+
 
 #  Add new product
 @router.post("/NewProduct", response_model=product_schema.ProductOut)
@@ -141,10 +147,8 @@ def get_top_performing_products(db: Session = Depends(get_db)):
 def inventory_summary_endpoint(db: Session = Depends(get_db)):
     return product_db.get_inventory_summary(db)
 
-@router.get("/simple-products", response_model=list[product_schema.SimpleProductOut])
-def get_all_simple_products(db: Session = Depends(get_db)):
-    products = product_db.get_simple_products(db)
-    return [product_schema.SimpleProductOut(**dict(row._mapping)) for row in products]
+
+
 
 #  Get product by ID (with photo URLs)
 @router.get("/{product_id}", response_model=product_schema.ProductOutWithDetails)
