@@ -812,7 +812,7 @@ def get_inventory_summary(db: Session):
     }
 
 
-def simple_products(db: Session):
+def get_all_simple_products(db: Session):
     from ..categories.category_db import Category
     from .attachment_product_db import get_attachments_by_product_id
 
@@ -823,18 +823,26 @@ def simple_products(db: Session):
         category_name = db.query(Category.category_name).filter(Category.category_id == product.category_id).scalar()
         attachments = get_attachments_by_product_id(db, product.product_id)
 
+        # ✅ Determine stock status
+        if product.remaining_quantity is None:
+            status = "Unknown"
+        elif product.remaining_quantity == 0:
+            status = "Out of Stock"
+        elif product.remaining_quantity <= 10:
+            status = "Low Stock"
+        else:
+            status = "In Stock"
 
-        
         output.append({
             "product_id": product.product_id,
             "product_name": product.product_name,
             "original_price": product.original_price,
             "selling_price": product.selling_price,
-            "total_quantity": product.total_quantity,
-            "availability_status": product.availability_status,
+            "remaining_quantity": product.remaining_quantity,
+            "availability_status": status,
             "category_name": category_name or "",
             "attachments": attachments
         })
-    #print the output of the function
-    print(output)
+
     return output
+

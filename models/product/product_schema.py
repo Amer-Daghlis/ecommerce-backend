@@ -133,8 +133,8 @@ class SimpleProductOut(BaseModel):
     product_name: str
     original_price: Optional[float]
     selling_price: Optional[float]
-    total_quantity: Optional[int]
-    availability_status: Optional[bool]
+    remaining_quantity: Optional[int]  # ✅ Show remaining, not total
+    availability_status: str           # ✅ Custom status
     category_name: str
     attachments: List[str] = []
 
