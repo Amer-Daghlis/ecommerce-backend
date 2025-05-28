@@ -9,8 +9,8 @@ from models.order import order_api
 from fastapi.middleware.cors import CORSMiddleware
 from models.Payment import pay_api   
 from models.social import social_api
-
 from models.order import TrackOrder_api
+from models.driver import driver_api
 
 app = FastAPI()
 app.add_middleware(
@@ -33,6 +33,8 @@ app.include_router(order_api.router)
 app.include_router(pay_api.router)
 app.include_router(social_api.router)
 app.include_router(TrackOrder_api.router)
+app.include_router(driver_api.router)
+
 
 
 

@@ -66,8 +66,6 @@ def get_all_users(db: Session):
     return db.query(User).all()
 
 # ✅ Get a user by their ID
-def get_user_by_id(db: Session, user_id: int):
-    return db.query(User).filter(User.user_id == user_id).first()
 
 # ✅ Get a user by their email (for login)
 def get_user_by_email(db: Session, email: str):
