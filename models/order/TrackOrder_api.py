@@ -41,7 +41,7 @@ def get_tracking_summary(order_id: int, db: Session = Depends(get_db)):
 
 
 @router.post("/new-track")
-def create_tracking_entry(track_data: TrackInSimple, db: Session = Depends(get_db)):
+def insert_tracking_entry_api(track_data: TrackInSimple, db: Session = Depends(get_db)):
     try:
         entry = insert_tracking_entry(db, track_data)
         return {"message": "Tracking entry added", "track_id": entry.track_id}

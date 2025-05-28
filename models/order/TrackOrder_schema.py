@@ -46,3 +46,14 @@ class TrackHistoryOut(BaseModel):
 
     class Config:
         from_attributes = True
+
+
+class TrackInSimple(BaseModel):
+    order_id: int
+    order_status: str
+    location: Optional[str] = None
+    description: Optional[str] = None
+    delivery_id: Optional[int] = None  # ✅ لازم تضيفه هون
+
+    class Config:
+        from_attributes = True

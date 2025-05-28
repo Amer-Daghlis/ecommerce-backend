@@ -18,7 +18,7 @@ def get_db():
 
 @router.get("/simple-products", response_model=List[product_schema.SimpleProductOut])
 def get_all_simple_products(db: Session = Depends(get_db)):
-    return product_db.simple_products(db)
+    return product_db.get_all_simple_products(db)
 
 
 #  Add new product
