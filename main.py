@@ -12,6 +12,7 @@ from models.social import social_api
 from models.order import TrackOrder_api
 from models.driver import driver_api
 from models.categories.sub_category_db import SubCategory
+from models.orderInfo import order_info_api
 
 
 app = FastAPI()
@@ -36,6 +37,7 @@ app.include_router(pay_api.router)
 app.include_router(social_api.router)
 app.include_router(TrackOrder_api.router)
 app.include_router(driver_api.router)
+app.include_router(order_info_api.router)
 
 
 
