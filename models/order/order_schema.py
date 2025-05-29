@@ -30,6 +30,7 @@ class orderCreate(BaseModel):
     going_location: str
     number_product: int
     receiver_name: str
+    tracking_number: str  # 👈 allow user to send it manually
 
     class Config:
         from_attributes = True

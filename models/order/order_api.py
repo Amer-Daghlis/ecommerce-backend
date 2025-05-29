@@ -49,7 +49,6 @@ def insertOrder(order: order_schema.orderCreate, db: Session = Depends(get_db)):
         order_data["payment"] = False
         order_data["payment_method"] = "Delivery"
         order_data["estimated_delivery"] = date.today() + timedelta(days=3)
-        order_data["tracking_number"] = f"TRK-{uuid.uuid4().hex[:8].upper()}"
 
         new_order = order_db.insert_onDelivery_order(db, order_data)
 
