@@ -11,6 +11,8 @@ from models.Payment import pay_api
 from models.social import social_api
 from models.order import TrackOrder_api
 from models.driver import driver_api
+from models.categories.sub_category_db import SubCategory
+
 
 app = FastAPI()
 app.add_middleware(
