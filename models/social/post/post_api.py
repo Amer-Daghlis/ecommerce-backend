@@ -1,9 +1,12 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from models.database import SessionLocal
-from models.social import post_schema, post_db
-from models.social.post_model import Post, AttachmentPost
-from models.social.post_schema import PostCreate, PostOut
+from models.social.post import post_schema, post_db
+from models.social.post.post_model import Post, AttachmentPost
+from models.social.post.post_schema import PostCreate, PostOut
+from models.social.post.post_like_model import PostLike
+from models.social.post.post_like_schema import LikePost
+
 
 router = APIRouter(prefix="/posts", tags=["Posts"])
 
@@ -37,3 +40,18 @@ def create_new_post(data: PostCreate, db: Session = Depends(get_db)):
         }
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed to create post: {e}")
+
+
+
+# Post Like Endpoint
+
+@router.post("/like", tags=["Likes"])
+def like_post(data: LikePost, db: Session = Depends(get_db)):
+    existing = db.query(PostLike).filter_by(post_id=data.post_id, user_id=data.user_id).first()
+    if existing:
+        raise HTTPException(status_code=400, detail="You already liked this post")
+
+    like = PostLike(post_id=data.post_id, user_id=data.user_id)
+    db.add(like)
+    db.commit()
+    return {"message": "Post liked successfully"}

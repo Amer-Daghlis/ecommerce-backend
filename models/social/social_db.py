@@ -1,10 +1,10 @@
 from sqlalchemy.orm import Session
 from sqlalchemy import extract, func
 from datetime import datetime
-from models.social.post_model import Post
-from models.social.comment_model import Comment
-from models.social.reported_post_model import ReportedPost
-from models.social.reported_comment_model import ReportedComment
+from models.social.post.post_model import Post
+from models.social.comment.comment_model import Comment
+from models.social.report.reported_post_model import ReportedPost
+from models.social.report.reported_comment_model import ReportedComment
 from models.user.user_db import User  
 
 def get_social_analytics(db: Session):

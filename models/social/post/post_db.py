@@ -1,8 +1,8 @@
 from sqlalchemy.orm import Session
-from models.social.post_model import Post
+from models.social.post.post_model import Post
 from sqlalchemy import extract
 from datetime import datetime
-from models.social.post_model import AttachmentPost
+from models.social.post.post_model import AttachmentPost
 
 def count_posts_by_month(db: Session, year: int, month: int):
     return db.query(Post).filter(

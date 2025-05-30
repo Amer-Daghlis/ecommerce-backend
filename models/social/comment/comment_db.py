@@ -1,5 +1,5 @@
 from sqlalchemy.orm import Session
-from models.social.comment_model import Comment
+from models.social.comment.comment_model import Comment
 from sqlalchemy import extract
 
 def count_comments_by_month(db: Session, year: int, month: int):

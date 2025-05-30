@@ -12,6 +12,7 @@ class Post(Base):
     post_content = Column("content", Text)     # ✅ نفس الشي
     post_date = Column(DateTime, default=datetime.datetime.utcnow)
     category = Column(String(100))
+    status = Column(String(20), default="normal")
 
     comments = relationship("Comment", back_populates="post")
     reports = relationship("ReportedPost", back_populates="post")

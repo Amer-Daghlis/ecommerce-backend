@@ -1,6 +1,7 @@
-from sqlalchemy import Column, Integer, Text, DateTime, ForeignKey
+from sqlalchemy import Column, Integer, Text, DateTime, ForeignKey, String
 from sqlalchemy.orm import relationship
 from models.database import Base
+
 import datetime
 
 class Comment(Base):
@@ -11,6 +12,7 @@ class Comment(Base):
     user_id = Column(Integer, ForeignKey("user.user_id"))
     comment_content = Column(Text)  # ✅ طابق اسم العمود في DB
     comment_date = Column(DateTime, default=datetime.datetime.utcnow)
+    status = Column(String(20), default="normal")
 
     post = relationship("Post", back_populates="comments")
     reports = relationship("ReportedComment", back_populates="comment")

@@ -1,4 +1,4 @@
-from models.social.comment_reply_model import CommentReply
+from models.social.comment_reply.comment_reply_model import CommentReply
 
 def insert_reply(db, data):
     reply = CommentReply(
