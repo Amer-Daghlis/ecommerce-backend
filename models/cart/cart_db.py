@@ -110,3 +110,21 @@ def get_cart_products(db: Session, user_id: int):
     if not cart:
         return []
     return db.query(CartProduct).filter(CartProduct.cart_id == cart.cart_id).all()
+
+
+def remove_product_from_cart(db: Session, cart_id: int, product_id: int):
+    # Check if the item exists in the cart
+    item = db.query(CartProduct).filter_by(cart_id=cart_id, product_id=product_id).first()
+    if not item:
+        return False, "Product not found in cart"
+
+    # Update total price
+    product = db.query(Product).filter(Product.product_id == product_id).first()
+    if product:
+        cart = db.query(Cart).filter(Cart.cart_id == cart_id).first()
+        if cart:
+            cart.total_price -= product.selling_price * item.quantity
+
+    db.delete(item)
+    db.commit()
+    return True, "Product removed from cart"

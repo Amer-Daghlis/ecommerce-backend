@@ -38,11 +38,18 @@ class Product(Base):
     
 def decrease_product_quantity(db: Session, product_id: int, quantity: int):
     product = db.query(Product).filter(Product.product_id == product_id).first()
+    
     if product:
         if product.remaining_quantity is None:
             raise ValueError(f"Product {product_id} has no stock defined")
+        
         if product.remaining_quantity >= quantity:
             product.remaining_quantity -= quantity
+
+            if product.remaining_quantity == 0:
+                product.is_available = False  # You must have this field in the Product model
+
+            db.commit()
         else:
             raise ValueError(f"Not enough stock for product_id: {product_id}")
     else:

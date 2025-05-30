@@ -40,3 +40,11 @@ def get_products_in_cart(cart_id: int, db: Session = Depends(get_db)):
     if not products:
         return {"message": "Cart is empty or not found."}
     return products
+
+
+@router.delete("/remove/{cart_id}/{product_id}")
+def remove_product_from_cart(cart_id: int, product_id: int, db: Session = Depends(get_db)):
+    success, message = cart_db.remove_product_from_cart(db, cart_id, product_id)
+    if not success:
+        raise HTTPException(status_code=404, detail=message)
+    return {"message": message}

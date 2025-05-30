@@ -91,16 +91,24 @@ def insertOrder(order: order_schema.orderCreate, db: Session = Depends(get_db)):
 @router.post("/add-products")
 def add_products_to_order(data: order_schema.AddProductsToOrderRequest, db: Session = Depends(get_db)):
     added_items = []
+    failed_items = []
+
     for product in data.products:
         try:
             item = order_product_db.add_product_to_order(db, data.order_id, product.product_id, product.quantity)
             added_items.append(item)
         except Exception as e:
             db.rollback()
-            raise HTTPException(status_code=500, detail=f"Failed to add product {product.product_id} to order: {e}")
-    return {"message": "Products added to order successfully", "added_items": added_items}
+            failed_items.append({
+                "product_id": product.product_id,
+                "error": str(e)
+            })
 
-#************************************** Admin Section *****************************************#
+    return {
+        "message": "Process completed",
+        "added_items": added_items,
+        "failed_items": failed_items
+    }#************************************** Admin Section *****************************************#
 
 # Get the revenue for the current month
 @router.get("/revenue/month", response_model=list[order_schema.MonthlyRevenue])
