@@ -7,7 +7,7 @@ MYSQL_USER = "root"
 MYSQL_PASSWORD = ""
 MYSQL_HOST = "localhost"
 MYSQL_PORT = "3307"
-MYSQL_DB = "final_database"
+MYSQL_DB = "database_Moedati"
 
 # 🧠 SQLAlchemy connection string
 DATABASE_URL = (

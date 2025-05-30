@@ -23,4 +23,17 @@ def create_reply(data: comment_reply_schema.ReplyCreate, db: Session = Depends(g
 
 @router.post("/like", tags=["Likes"])
 def like_reply(data: comment_reply_like_schema.LikeReply, db: Session = Depends(get_db)):
-    return comment_reply_like_db.like_reply(db, data.reply_id, data.user_id)
+    try:
+        existing_like = db.query(comment_reply_like_db.CommentReplyLike).filter_by(reply_id=data.reply_id, user_id=data.user_id).first()
+
+        if existing_like:
+            db.delete(existing_like)
+            db.commit()
+            return {"message": "Unlike successfully"}
+        else:
+            new_like = comment_reply_like_db.CommentReplyLike(reply_id=data.reply_id, user_id=data.user_id)
+            db.add(new_like)
+            db.commit()
+            return {"message": "Liked successfully"}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to toggle like: {e}")

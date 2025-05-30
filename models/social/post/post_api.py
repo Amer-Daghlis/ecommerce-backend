@@ -47,11 +47,17 @@ def create_new_post(data: PostCreate, db: Session = Depends(get_db)):
 
 @router.post("/like", tags=["Likes"])
 def like_post(data: LikePost, db: Session = Depends(get_db)):
-    existing = db.query(PostLike).filter_by(post_id=data.post_id, user_id=data.user_id).first()
-    if existing:
-        raise HTTPException(status_code=400, detail="You already liked this post")
+    try:
+        existing_like = db.query(PostLike).filter_by(post_id=data.post_id, user_id=data.user_id).first()
 
-    like = PostLike(post_id=data.post_id, user_id=data.user_id)
-    db.add(like)
-    db.commit()
-    return {"message": "Post liked successfully"}
+        if existing_like:
+            db.delete(existing_like)
+            db.commit()
+            return {"message": "Unlike successfully"}
+        else:
+            new_like = PostLike(post_id=data.post_id, user_id=data.user_id)
+            db.add(new_like)
+            db.commit()
+            return {"message": "Liked successfully"}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to toggle like: {e}")

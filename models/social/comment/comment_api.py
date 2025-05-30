@@ -24,6 +24,16 @@ def create_comment(data: comment_schema.CommentCreate, db: Session = Depends(get
 @router.post("/like", tags=["Likes"])
 def like_comment(data: comment_like_schema.LikeComment, db: Session = Depends(get_db)):
     try:
-        return comment_like_db.like_comment(db, data.comment_id, data.user_id)
+        existing_like = db.query(comment_like_model.CommentLike).filter_by(comment_id=data.comment_id, user_id=data.user_id).first()
+
+        if existing_like:
+            db.delete(existing_like)
+            db.commit()
+            return {"message": "Unlike successfully"}
+        else:
+            new_like = comment_like_model.CommentLike(comment_id=data.comment_id, user_id=data.user_id)
+            db.add(new_like)
+            db.commit()
+            return {"message": "Liked successfully"}
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Failed to like comment: {e}")
+        raise HTTPException(status_code=500, detail=f"Failed to toggle like: {e}")
