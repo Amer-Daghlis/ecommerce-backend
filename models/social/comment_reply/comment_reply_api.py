@@ -3,7 +3,8 @@ from sqlalchemy.orm import Session
 from models.database import SessionLocal
 from models.social.comment_reply import comment_reply_schema, comment_reply_db
 from models.social.comment_reply import comment_reply_like_db, comment_reply_like_schema
-
+from models.social.comment_reply.comment_reply_schema import CommentReplyWithLikesOut
+from typing import List
 router = APIRouter(prefix="/replies", tags=["Replies"])
 
 def get_db():
@@ -37,3 +38,11 @@ def like_reply(data: comment_reply_like_schema.LikeReply, db: Session = Depends(
             return {"message": "Liked successfully"}
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed to toggle like: {e}")
+
+
+@router.get("/all-with-likes", response_model=List[CommentReplyWithLikesOut])
+def get_all_comment_replies_with_likes(db: Session = Depends(get_db)):
+    try:
+        return comment_reply_db.get_all_comment_replies_with_likes(db)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to fetch comment replies with likes: {e}")

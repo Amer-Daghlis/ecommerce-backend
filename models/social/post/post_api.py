@@ -6,6 +6,8 @@ from models.social.post.post_model import Post, AttachmentPost
 from models.social.post.post_schema import PostCreate, PostOut
 from models.social.post.post_like_model import PostLike
 from models.social.post.post_like_schema import LikePost
+from typing import List
+from models.social.post.post_schema import PostWithLikesOut
 
 
 router = APIRouter(prefix="/posts", tags=["Posts"])
@@ -61,3 +63,11 @@ def like_post(data: LikePost, db: Session = Depends(get_db)):
             return {"message": "Liked successfully"}
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed to toggle like: {e}")
+
+
+@router.get("/all-with-likes", response_model=List[PostWithLikesOut])
+def get_all_posts_with_likes(db: Session = Depends(get_db)):
+    try:
+        return post_db.get_all_posts_with_likes(db)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to fetch posts with likes: {e}")

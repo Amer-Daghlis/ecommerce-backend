@@ -3,6 +3,8 @@ from models.social.post.post_model import Post
 from sqlalchemy import extract
 from datetime import datetime
 from models.social.post.post_model import AttachmentPost
+from models.user.user_db import User
+from models.social.post.post_like_model import PostLike
 
 def count_posts_by_month(db: Session, year: int, month: int):
     return db.query(Post).filter(
@@ -31,3 +33,29 @@ def create_post(db: Session, data):
 
     db.commit()
     return new_post
+
+
+def get_all_posts_with_likes(db: Session):
+    posts = db.query(Post).all()
+    result = []
+
+    for post in posts:
+        likes = db.query(PostLike).filter(PostLike.post_id == post.post_id).all()
+        users = []
+
+        for like in likes:
+            user = db.query(User).filter(User.user_id == like.user_id).first()
+            if user:
+                users.append({
+                    "user_id": user.user_id,
+                    "name": user.user_name,
+                    "photo": user.photo
+                })
+
+        result.append({
+            "post_id": post.post_id,
+            "liked_users": users
+        })
+
+    return result
+

@@ -2,6 +2,7 @@ from sqlalchemy import Column, Integer, Text, DateTime, ForeignKey, String
 from sqlalchemy.orm import relationship
 from models.database import Base
 import datetime
+from models.social.report.reported_reply_comment_model import ReportedCommentReply  
 
 class CommentReply(Base):
     __tablename__ = "comment_reply"
@@ -12,4 +13,6 @@ class CommentReply(Base):
     reply_content = Column(Text)
     reply_date = Column(DateTime, default=datetime.datetime.utcnow)
     status = Column(String(20), default="normal")
+
+    reports = relationship("ReportedCommentReply", back_populates="reply")
 

@@ -4,6 +4,8 @@ from models.social.report.reported_comment_model import ReportedComment
 from sqlalchemy import extract, Column
 from datetime import datetime 
 from models.social.comment.comment_model import Comment
+from models.social.comment_reply.comment_reply_model import CommentReply
+from models.social.report.reported_reply_comment_model import ReportedCommentReply  
 
 
 
@@ -93,3 +95,36 @@ def report_comment(db: Session, user_id: int, comment_id: int, note: str):
     db.refresh(report)
 
     return report.report_date, comment.status
+
+
+def report_reply(db: Session, user_id: int, reply_id: int, note: str):
+    reply = db.query(CommentReply).filter(CommentReply.reply_id == reply_id).first()
+    if not reply:
+        raise HTTPException(status_code=404, detail="Reply not found")
+
+    if reply.status == "removed":
+        raise HTTPException(status_code=400, detail="You cannot report a removed reply")
+
+    existing = db.query(ReportedCommentReply).filter(
+        ReportedCommentReply.user_id == user_id,
+        ReportedCommentReply.reply_id == reply_id
+    ).first()
+    if existing:
+        raise HTTPException(status_code=400, detail="You already reported this reply")
+
+    if reply.status == "normal":
+        reply.status = "reported"
+
+    report = ReportedCommentReply(
+        user_id=user_id,
+        reply_id=reply_id,
+        note=note,
+        report_date=datetime.utcnow(),
+        status="pending"
+    )
+
+    db.add(report)
+    db.commit()
+    db.refresh(report)
+
+    return report.report_date, reply.status

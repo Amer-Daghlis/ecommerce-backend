@@ -20,3 +20,21 @@ class PostOut(BaseModel):
 
     class Config:
         from_attributes = True
+
+
+
+class UserLikeInfo(BaseModel):
+    user_id: int
+    name: str
+    photo: Optional[str]
+
+    class Config:
+        from_attributes = True
+
+
+class PostWithLikesOut(BaseModel):
+    post_id: int
+    liked_users: List[UserLikeInfo]
+
+    class Config:
+        from_attributes = True

@@ -5,6 +5,8 @@ from models.social.report import reported_post_model, reported_db
 from models.social.report.reported_post_model import ReportPostIn, ReportPostOut
 from models.social.report import reported_post_model
 from models.social.report import reported_comment_model
+from models.social.report.reported_comment_model import ReportCommentIn, ReportCommentOut
+from models.social.report.reported_reply_comment_model import ReportReplyIn, ReportReplyOut
 
 
 router = APIRouter(prefix="/report", tags=["Report"])
@@ -38,6 +40,21 @@ def report_comment(data: reported_comment_model.ReportCommentIn, db: Session = D
             "message": "Report submitted successfully",
             "report_date": report_date,
             "comment_status": comment_status
+        }
+    except HTTPException as e:
+        raise e
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Internal error: {str(e)}")
+
+
+@router.post("/reply", response_model=ReportReplyOut)
+def report_comment_reply(data: ReportReplyIn, db: Session = Depends(get_db)):
+    try:
+        report_date, reply_status = reported_db.report_reply(db, data.user_id, data.reply_id, data.note)
+        return {
+            "message": "Report submitted successfully",
+            "report_date": report_date,
+            "reply_status": reply_status
         }
     except HTTPException as e:
         raise e

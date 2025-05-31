@@ -4,7 +4,8 @@ from models.database import SessionLocal
 from models.social.comment import comment_schema, comment_db
 from models.social.comment import comment_like_schema, comment_like_model
 from models.social.comment import comment_like_db
-
+from models.social.comment.comment_schema import CommentWithLikesOut
+from typing import List
 router = APIRouter(prefix="/comments", tags=["Comments"])
 
 def get_db():
@@ -37,3 +38,12 @@ def like_comment(data: comment_like_schema.LikeComment, db: Session = Depends(ge
             return {"message": "Liked successfully"}
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed to toggle like: {e}")
+    
+
+
+@router.get("/all-with-likes", response_model=List[CommentWithLikesOut])
+def get_all_comments_with_likes(db: Session = Depends(get_db)):
+    try:
+        return comment_db.get_all_comments_with_likes(db)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to fetch comments with likes: {e}")

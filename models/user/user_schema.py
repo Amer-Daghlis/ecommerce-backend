@@ -82,3 +82,11 @@ class MonthlyUserJoin(BaseModel):
 
     class Config:
         from_attributes = True
+
+
+class User(Base):
+    __tablename__ = "user"
+
+    user_id = Column(Integer, primary_key=True)
+    name = Column(String(255))       # ✅ تأكد إنه موجود
+    photo = Column(String(255))      # ✅ تأكد إنه موجود
