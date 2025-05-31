@@ -38,3 +38,8 @@ class PostWithLikesOut(BaseModel):
 
     class Config:
         from_attributes = True
+
+class TopPostOut(BaseModel):
+    post_title: str
+    likes_count: int
+    comments_count: int

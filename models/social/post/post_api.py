@@ -71,3 +71,10 @@ def get_all_posts_with_likes(db: Session = Depends(get_db)):
         return post_db.get_all_posts_with_likes(db)
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed to fetch posts with likes: {e}")
+
+@router.get("/top-performing", tags=["Analytics"])
+def top_performing_posts(db: Session = Depends(get_db)):
+    try:
+        return post_db.get_top_performing_posts(db)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to fetch top posts: {e}")
