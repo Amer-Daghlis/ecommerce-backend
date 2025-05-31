@@ -71,8 +71,8 @@ def get_all_posts_full_json(db: Session = Depends(get_db)):
 
             post_obj = {
                 "post_id": p.post_id,
-                "title": p.title or "",
-                "content": p.content or "",
+                "title": p.post_title or "",
+                "content": p.post_content or "",
                 "user": {
                     "name": user.user_name if user else "Unknown",
                     "username": (user.user_email.split("@")[0] if user else ""),
