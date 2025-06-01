@@ -106,3 +106,36 @@ def get_detailed_social_users(db: Session):
         })
 
     return result
+
+def get_top_engaged_users(db: Session, limit: int = 5):
+    post_counts = db.query(
+        Post.user_id,
+        func.count(Post.post_id).label("post_count")
+    ).group_by(Post.user_id).subquery()
+
+    comment_counts = db.query(
+        Comment.user_id,
+        func.count(Comment.comment_id).label("comment_count")
+    ).group_by(Comment.user_id).subquery()
+
+    results = db.query(
+        User.user_name,
+        User.phone_number.label("user_phone"),
+        func.coalesce(post_counts.c.post_count, 0).label("post_count"),
+        func.coalesce(comment_counts.c.comment_count, 0).label("comment_count"),
+        (func.coalesce(post_counts.c.post_count, 0) + func.coalesce(comment_counts.c.comment_count, 0)).label("engagement_score")
+    ).outerjoin(post_counts, User.user_id == post_counts.c.user_id)\
+     .outerjoin(comment_counts, User.user_id == comment_counts.c.user_id)\
+     .order_by((func.coalesce(post_counts.c.post_count, 0) + func.coalesce(comment_counts.c.comment_count, 0)).desc())\
+     .limit(limit)\
+     .all()
+
+    return [
+        {
+            "user_name": row.user_name,
+            "user_phone": row.user_phone or "",  # to avoid validation error
+            "post_count": row.post_count,
+            "comment_count": row.comment_count
+        }
+        for row in results
+    ]

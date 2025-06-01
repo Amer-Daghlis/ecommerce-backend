@@ -30,3 +30,12 @@ class UserSocialInfo(BaseModel):
 
     class Config:
         from_attributes = True
+
+
+
+
+class TopEngagedUser(BaseModel):
+    user_name: str
+    user_phone: Optional[str]
+    post_count: int
+    comment_count: int

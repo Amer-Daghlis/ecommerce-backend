@@ -14,6 +14,9 @@ from collections import defaultdict
 from models.social.post.post_model import AttachmentPost
 from typing import List
 
+from models.social.social_schema import TopEngagedUser,UserSocialInfo
+
+
 router = APIRouter(prefix="/social", tags=["Social Media"])
 
 def get_db():
@@ -129,7 +132,6 @@ def get_all_posts_full_json(db: Session = Depends(get_db)):
         raise HTTPException(status_code=500, detail=f"Error fetching full post data: {str(e)}")
     
 
-from models.social.social_schema import UserSocialInfo
 
 @router.get("/active-users-detailed", response_model=List[UserSocialInfo])
 def get_detailed_users(db: Session = Depends(get_db)):
@@ -137,3 +139,11 @@ def get_detailed_users(db: Session = Depends(get_db)):
         return social_db.get_detailed_social_users(db)
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed to fetch user details: {e}")
+
+
+@router.get("/top-engaged-users", response_model=List[TopEngagedUser], tags=["Analytics"])
+def get_top_engaged_users(db: Session = Depends(get_db)):
+    try:
+        return social_db.get_top_engaged_users(db)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to fetch top engaged users: {e}")
