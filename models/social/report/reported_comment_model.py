@@ -15,7 +15,7 @@ class ReportedComment(Base):
     status = Column(Enum("pending", "rejected", name="report_comment_status"), default="pending")
 
     comment = relationship("Comment", back_populates="reports")
-
+    user = relationship("User") 
 
 class ReportCommentIn(BaseModel):
     user_id: int

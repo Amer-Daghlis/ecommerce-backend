@@ -1,4 +1,7 @@
 from pydantic import BaseModel
+from typing import Optional
+from datetime import datetime
+from typing import Union
 
 class SocialAnalytics(BaseModel):
     current_month_posts: int
@@ -9,3 +12,21 @@ class SocialAnalytics(BaseModel):
     previous_month_users: int
     current_month_reports: int
     previous_month_reports: int
+
+class UserSocialInfo(BaseModel):
+    id: int
+    name: str
+    username: str
+    email: str
+    avatar: Optional[str]
+    status: Optional[Union[str, bool]]
+    joined: str
+    posts: int
+    comments: int
+    likes: int
+    reports: int
+    engagement: int
+    location: Optional[str]
+
+    class Config:
+        from_attributes = True

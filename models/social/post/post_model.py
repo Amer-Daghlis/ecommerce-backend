@@ -16,7 +16,7 @@ class Post(Base):
 
     comments = relationship("Comment", back_populates="post")
     reports = relationship("ReportedPost", back_populates="post")
-
+    user = relationship("User")  
 class AttachmentPost(Base):
     __tablename__ = "attachmentpost"
 

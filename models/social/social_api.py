@@ -12,6 +12,7 @@ from models.user.user_db import User
 from sqlalchemy.orm import joinedload, subqueryload
 from collections import defaultdict
 from models.social.post.post_model import AttachmentPost
+from typing import List
 
 router = APIRouter(prefix="/social", tags=["Social Media"])
 
@@ -126,3 +127,13 @@ def get_all_posts_full_json(db: Session = Depends(get_db)):
 
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error fetching full post data: {str(e)}")
+    
+
+from models.social.social_schema import UserSocialInfo
+
+@router.get("/active-users-detailed", response_model=List[UserSocialInfo])
+def get_detailed_users(db: Session = Depends(get_db)):
+    try:
+        return social_db.get_detailed_social_users(db)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to fetch user details: {e}")

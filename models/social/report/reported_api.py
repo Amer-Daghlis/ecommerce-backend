@@ -60,3 +60,37 @@ def report_comment_reply(data: ReportReplyIn, db: Session = Depends(get_db)):
         raise e
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Internal error: {str(e)}")
+
+
+@router.get("/random-reports")
+def get_random_reports(db: Session = Depends(get_db)):
+    try:
+        data = reported_db.get_random_reported_items(db)
+        return data
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Internal error: {str(e)}")
+
+
+@router.get("/all-reported")
+def get_all_reported(db: Session = Depends(get_db)):
+    try:
+        data = reported_db.get_all_reported_data(db)
+        return data
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Internal error: {str(e)}")
+
+from pydantic import BaseModel
+
+class SetReportStatusIn(BaseModel):
+    report_id: int
+    report_type: str
+    new_status: str
+
+@router.put("/set-status")
+def update_report_status(data: SetReportStatusIn, db: Session = Depends(get_db)):
+    try:
+        return reported_db.set_report_status(db, data.report_id, data.report_type, data.new_status)
+    except HTTPException as e:
+        raise e
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Internal error: {str(e)}")

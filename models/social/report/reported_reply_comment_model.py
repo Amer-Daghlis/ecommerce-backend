@@ -15,7 +15,7 @@ class ReportedCommentReply(Base):
     status = Column(Enum("pending", "rejected", name="report_reply_status"), default="pending")
 
     reply = relationship("CommentReply", back_populates="reports")  # ✅ بدون import مباشر
-
+    user = relationship("User") 
 
 class ReportReplyIn(BaseModel):
     user_id: int

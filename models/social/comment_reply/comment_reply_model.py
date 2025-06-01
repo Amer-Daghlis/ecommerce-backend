@@ -15,4 +15,4 @@ class CommentReply(Base):
     status = Column(String(20), default="normal")
 
     reports = relationship("ReportedCommentReply", back_populates="reply")
-
+    user = relationship("User")  

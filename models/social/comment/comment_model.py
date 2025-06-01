@@ -13,6 +13,7 @@ class Comment(Base):
     comment_content = Column(Text)  # ✅ طابق اسم العمود في DB
     comment_date = Column(DateTime, default=datetime.datetime.utcnow)
     status = Column(String(20), default="normal")
-
+    
     post = relationship("Post", back_populates="comments")
     reports = relationship("ReportedComment", back_populates="comment")
+    user = relationship("User")  

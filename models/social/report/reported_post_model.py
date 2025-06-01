@@ -16,7 +16,7 @@ class ReportedPost(Base):
     status = Column(Enum("pending", "rejected", name="report_status"), default="pending")
 
     post = relationship("Post", back_populates="reports")
-
+    user = relationship("User") 
 
 class ReportPostIn(BaseModel):
     user_id: int           # المستخدم الذي قدّم التبليغ
