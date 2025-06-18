@@ -60,6 +60,12 @@ def report_comment_reply(data: ReportReplyIn, db: Session = Depends(get_db)):
         raise e
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Internal error: {str(e)}")
+       # How to test this API:
+       # {
+       #  "user_id": 1,
+       #  "reply_id": 1,
+       #  "note": "WeWe."
+       # }
 
 
 @router.get("/random-reports")
